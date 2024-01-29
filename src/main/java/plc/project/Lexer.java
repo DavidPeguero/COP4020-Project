@@ -70,18 +70,44 @@ public final class Lexer {
      * Returns true if the next sequence of characters match the given patterns,
      * which should be a regex. For example, {@code peek("a", "b", "c")} would
      * return true if the next characters are {@code 'a', 'b', 'c'}.
+     * Can pass in regex expression due to the String... patterns parameter
      */
     public boolean peek(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in Lecture)
+
+        // Checks letter by letter to see if the charstream matches the pattern given
+        for (int i = 0; i < patterns.length; i++) {
+
+            // Checks letter if it matches the letter in patterns
+            if (!chars.has(i) || !String.valueOf(chars.get(i)).matches(patterns[i]) ) {
+
+                return false;
+            }
+        }
+
+        // Charstream matches with the given pattern
+        return true;
     }
 
     /**
      * Returns true in the same way as {@link #peek(String...)}, but also
      * advances the character stream past all matched characters if peek returns
      * true. Hint - it's easiest to have this method simply call peek.
+     * Parameter accepts regex expressions
      */
     public boolean match(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in Lecture)
+        // Calls peek to get the validity of the charstream
+        boolean peak = peek(patterns);
+
+        // If true, advance however many characters is consumed
+        if (peak)  {
+            for (int i= 0; i < patterns.length; i++){
+                chars.advance();
+            }
+            return true;
+        }
+
+        // Return the validity of the charstream when compared to the given pattern
+        return peek;
     }
 
     /**
@@ -119,6 +145,7 @@ public final class Lexer {
             length = 0;
         }
 
+        // Purpose: goes to current index, and starts on new token, returns token identified
         public Token emit(Token.Type type) {
             int start = index - length;
             skip();
