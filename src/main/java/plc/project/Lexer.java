@@ -96,10 +96,10 @@ public final class Lexer {
      */
     public boolean match(String... patterns) {
         // Calls peek to get the validity of the charstream
-        boolean peak = peek(patterns);
+        boolean peek = peek(patterns);
 
         // If true, advance however many characters is consumed
-        if (peak)  {
+        if (peek)  {
             for (int i= 0; i < patterns.length; i++){
                 chars.advance();
             }
@@ -155,3 +155,9 @@ public final class Lexer {
     }
 
 }
+
+// Notes
+/*
+*
+*
+ */
