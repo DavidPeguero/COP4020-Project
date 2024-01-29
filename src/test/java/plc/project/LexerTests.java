@@ -23,7 +23,24 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "getName", true),
                 Arguments.of("Alphanumeric", "thelegend27", true),
                 Arguments.of("Leading Hyphen", "-five", false),
-                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
+                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false),
+
+                Arguments.of("Special Symbols", "[aaaaa", false),
+                Arguments.of("Multiple @", "@ad@m", false),
+                Arguments.of("@ at Location other than 0", "testing@", false),
+                Arguments.of("Special characters", "hello/World", false),
+                Arguments.of("Leading Underscore", "_wow", false),
+                Arguments.of("Invalid Character", "ron;ld_mcd0nald", false),
+                Arguments.of("One Character False", "+", false),
+                Arguments.of("Last Character False", "variable;", false),
+
+                Arguments.of("Leading @", "@commandName", true),
+                Arguments.of("Mixing Underscores", "Hello_World_", true),
+                Arguments.of("Mixing Hyphens", "Hello-World-", true),
+                Arguments.of("Mixing Hyphens and Underscores", "Hello_-World-_", true),
+                Arguments.of("Single Character @", "@", true),
+                Arguments.of("Single Character", "a", true)
+
         );
     }
 

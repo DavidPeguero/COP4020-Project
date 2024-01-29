@@ -1,5 +1,6 @@
 package plc.project;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,11 +14,15 @@ import java.util.List;
  * should throw a {@link ParseException} with an index at the character which is
  * invalid.
  *
- * The {@link #peek(String...)} and {@link #match(String...)} functions are * helpers you need to use, they will make the implementation a lot easier. */
+ * The {@link #peek(String...)} and {@link #match(String...)} functions are
+ * helpers you need to use, they will make the implementation a lot easier.
+ **/
 public final class Lexer {
 
     private final CharStream chars;
+    private final String idStart = "(@)|[A-Za-z]";
 
+    // Constructor
     public Lexer(String input) {
         chars = new CharStream(input);
     }
@@ -27,7 +32,12 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        throw new UnsupportedOperationException(); //TODO
+        List<Token> tokenList = new ArrayList<>();
+        while (chars.has(0)){
+            tokenList.add(lexToken());
+        }
+
+        return tokenList;
     }
 
     /**
@@ -39,11 +49,30 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+
+        if ( peek(idStart) ){
+            return lexIdentifier();
+        }
+        else  { // Catch all if token start is not valid
+            throw new ParseException("Not a valid token", 0);
+        }
+
     }
 
+    // identifier ::= ( '@' | [A-Za-z] ) [A-Za-z0-9_-]*
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+
+        // First character is guaranteed a match
+        match(idStart);
+
+        // Check character by character
+        String idBody = "[A-Za-z0-9_-]*";
+        while(chars.has(0))
+            if ( !match(idBody) ) // Not able to match while there are still characters in the token
+                throw new ParseException("Not a valid Identifier", chars.index);
+
+        // All characters in the string match identifier regex
+        return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
@@ -99,11 +128,10 @@ public final class Lexer {
         boolean peek = peek(patterns);
 
         // If true, advance however many characters is consumed
-        if (peek)  {
-            for (int i= 0; i < patterns.length; i++){
+        if (peek) {
+            for (int i = 0; i < patterns.length; i++){
                 chars.advance();
             }
-            return true;
         }
 
         // Return the validity of the charstream when compared to the given pattern
