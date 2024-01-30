@@ -116,8 +116,23 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Character", "(", true),
                 Arguments.of("Comparison", "!=", true),
+                Arguments.of("AND", "&&", true),
+                Arguments.of("OR", "||", true),
+                Arguments.of("More ANDs", "&&&", false),
                 Arguments.of("Space", " ", false),
-                Arguments.of("Tab", "\t", false)
+                Arguments.of("Tab", "\t", false),
+                Arguments.of("Single =", "=", true),
+                Arguments.of("Single !", "!", true),
+                Arguments.of("Incomplete Compound OR", "|", true),
+                Arguments.of("Incomplete Compound AND", "&", true),
+                Arguments.of("Character Alphabet", "a", false),
+                Arguments.of("Identifier @", "@", false),
+                Arguments.of("Character", "[", true),
+                Arguments.of("Multiple Operators", "-)", false),
+                Arguments.of("Incorrect Compound", "!!", false),
+                Arguments.of("Incorrect Compound 2", "||&", false),
+                Arguments.of("Multiple Operators Separated by Whitespace", "! ==", false),
+                Arguments.of("Multiple Operators Separated by Whitespace", "( ==", false)
         );
     }
 

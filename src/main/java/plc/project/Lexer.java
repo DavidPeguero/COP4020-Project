@@ -20,7 +20,6 @@ import java.util.List;
 public final class Lexer {
 
     private final CharStream chars;
-    private final String idStart = "(@)|[A-Za-z]";
 
     // Constructor
     public Lexer(String input) {
@@ -40,6 +39,13 @@ public final class Lexer {
         return tokenList;
     }
 
+    private final String alphabet = "A-Za-z";
+    private final String numbers = "0-9";
+    private final String whiteSpace = " \b\n\r\t";
+    private final String alphanumeric = alphabet + numbers;
+    private final String idStart = "@|[" + alphabet + "]";
+    private final String opStart = "[!=]|&|\\||[^" + alphanumeric + whiteSpace +"]";
+
     /**
      * This method determines the type of the next token, delegating to the
      * appropriate lex method. As such, it is best for this method to not change
@@ -49,12 +55,16 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
+        // "([!=]=)?|&&|\\|\\||[^A-Za-z0-9_@]"
 
         if ( peek(idStart) ){
             return lexIdentifier();
         }
+        else if ( peek(opStart) ) {
+            return lexOperator();
+        }
         else  { // Catch all if token start is not valid
-            throw new ParseException("Not a valid token", 0);
+            throw new ParseException("Not a valid token", chars.index);
         }
 
     }
@@ -66,7 +76,7 @@ public final class Lexer {
         match(idStart);
 
         // Check character by character
-        String idBody = "[A-Za-z0-9_-]*";
+        String idBody = "[" + alphanumeric+ "_-]*";
         while(chars.has(0))
             if ( !match(idBody) ) // Not able to match while there are still characters in the token
                 throw new ParseException("Not a valid Identifier", chars.index);
@@ -91,8 +101,42 @@ public final class Lexer {
         throw new UnsupportedOperationException(); //TODO
     }
 
+    private void checkCompound(char input) {
+
+        // If the compound is ever called after finding the second character, it is not a valid token
+        if (chars.length >= 1)
+            throw new ParseException("Not a valid Operation Token", chars.index);
+
+        // Start of new compound
+        match(opStart);
+
+        // Check if following character matches compound requirements
+        if (chars.has(0) && chars.get(0) == input)
+            match("\\" + String.valueOf(input));
+    }
+
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        // "([!=]=)?|&&|\\|\\||[^A-Za-z0-9_@]"
+        while (chars.has(0)){
+            // Different cases where we check for compound or single operator
+            switch (chars.get(0)){
+                case '!':
+                case '=':
+                    checkCompound('=');
+                    break;
+                case '&':
+                    checkCompound('&');
+                    break;
+                case '|':
+                    checkCompound('|');
+                    break;
+                default:
+                    if (chars.length == 1) {throw new ParseException("Not a valid operator token", chars.index);}
+                    match("[^" + idStart + whiteSpace + "]");
+            }
+        }
+        // Reaches this case if we have a valid operator
+        return chars.emit(Token.Type.OPERATOR);
     }
 
     /**
@@ -149,8 +193,11 @@ public final class Lexer {
     public static final class CharStream {
 
         private final String input;
+        // String input
         private int index = 0;
+        // Current index
         private int length = 0;
+        // Possible token length
 
         public CharStream(String input) {
             this.input = input;
@@ -183,9 +230,3 @@ public final class Lexer {
     }
 
 }
-
-// Notes
-/*
-*
-*
- */
