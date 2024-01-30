@@ -46,6 +46,10 @@ public final class Lexer {
     private final String idStart = "@|[" + alphabet + "]";
     private final String opStart = "[!=]|&|\\||[^" + alphanumeric + whiteSpace +"]";
 
+
+
+
+
     /**
      * This method determines the type of the next token, delegating to the
      * appropriate lex method. As such, it is best for this method to not change
@@ -59,6 +63,9 @@ public final class Lexer {
 
         if ( peek(idStart) ){
             return lexIdentifier();
+        }
+        else if(peek("\"")){
+            return lexString();
         }
         else if ( peek(opStart) ) {
             return lexOperator();
@@ -94,7 +101,25 @@ public final class Lexer {
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+
+
+        match("\"");
+
+        while(chars.has(0)){
+            System.out.println(chars.get(0));
+             if (match("\"")) {
+                return chars.emit(Token.Type.STRING);
+             }
+             else if (match("\\\\")) {
+                 if(!match("[bnrt'\"\\\\]")) {
+                     throw new ParseException("Invalid String Input", chars.index);
+                 }
+             }
+             else{
+                 match("[^\"\\\\]");
+             }
+        }
+        throw new ParseException("Unterminated String", chars.index);
     }
 
     public void lexEscape() {
