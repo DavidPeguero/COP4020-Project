@@ -33,7 +33,11 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokenList = new ArrayList<>();
         while (chars.has(0)){
-            tokenList.add(lexToken());
+            if(match("\\s")){
+                lexEscape();
+            } else {
+                tokenList.add(lexToken());
+            }
         }
 
         return tokenList;
@@ -224,7 +228,7 @@ public final class Lexer {
     public void lexEscape() {
         // Skip escape characters
         // Call chars.advance and then chars.skip
-        throw new UnsupportedOperationException(); //TODO
+        chars.skip();
     }
 
     private void checkCompound(char input) {
