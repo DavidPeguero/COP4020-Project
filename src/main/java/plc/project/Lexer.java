@@ -60,8 +60,9 @@ public final class Lexer {
         String numberStart = "0|-|[1-9]";
         if ( peek(idStart) ){
             return lexIdentifier();
-        }
-        else if(peek("\"")){
+        } else if (peek("'")) {
+            return lexCharacter();
+        } else if(peek("\"")){
             return lexString();
         }
         else if ( peek(numberStart) ) {
@@ -170,7 +171,37 @@ public final class Lexer {
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        //Match on single quote initially
+        match("'");
+
+        while(chars.has(0)){
+            if(match("\\\\")){
+                if(match("[bnrt'\"\\\\]")) {
+                    if(match("'")){
+                        return chars.emit(Token.Type.CHARACTER);
+                    }
+                    else{
+                        throw new ParseException("Not a valid character length", chars.index);
+                    }
+
+                }
+                else{
+                    throw new ParseException("Invalid Escape", chars.index);
+                }
+            }
+            else if(match("[^'\\\\]")){
+                if(match("'")){
+                    return chars.emit(Token.Type.CHARACTER);
+                }
+                else{
+                    throw new ParseException("Not a valid character length", chars.index);
+                }
+            } else if (match("'")) {
+                throw new ParseException("Not valid: empty character token", chars.index);
+            }
+        }
+
+        throw new ParseException("Unterminated Character Token", chars.index);
     }
 
     public Token lexString() {
@@ -179,7 +210,6 @@ public final class Lexer {
         match("\"");
 
         while(chars.has(0)){
-            System.out.println(chars.get(0));
              if (match("\"")) {
                 return chars.emit(Token.Type.STRING);
              }
