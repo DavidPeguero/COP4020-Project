@@ -151,7 +151,8 @@ public final class Lexer {
                     continue;
 
                 // Check if decimal point exists
-                else if (match("\\.", "[" + numbers + "]") && !isDecimal){
+                else if (peek("\\.", "[" + numbers + "]") && !isDecimal){
+                    match("\\.", "[" + numbers + "]");
                     isDecimal = true;
                 }
                 else {
