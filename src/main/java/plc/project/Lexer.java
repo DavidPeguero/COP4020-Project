@@ -149,7 +149,11 @@ public final class Lexer {
                 // By default, check if there are any numbers to add to integer
                 if (match("[" + numbers + "]")) {
                     continue;
-                } else if (match("\\.", "[" + numbers + "]") && !isDecimal){ // Check if decimal point exists
+                }
+
+                // Check if decimal point exists
+                else if (peek("\\.", "[" + numbers + "]") && !isDecimal){
+                    match("\\.", "[" + numbers + "]");
                     isDecimal = true;
                 }
                 else {

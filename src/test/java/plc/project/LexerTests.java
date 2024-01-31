@@ -55,7 +55,11 @@ public class LexerTests {
                 Arguments.of("Single Digit", "1", true),
                 Arguments.of("Multiple Digits", "12345", true),
                 Arguments.of("Negative", "-1", true),
-                Arguments.of("Leading Zero", "01", false)
+                Arguments.of("Large integer with trailing zeroes", "100000000000", true),
+                Arguments.of("Leading Zero", "01", false),
+                Arguments.of("Negative Zero Integer", "-0", false),
+                Arguments.of("Decimal", "1.2", false),
+                Arguments.of("Decimal", "00", false)
         );
     }
 
@@ -71,8 +75,14 @@ public class LexerTests {
                 Arguments.of("Decimal with Identifier", "0.123a", false),
                 Arguments.of("Multiple Digits", "123.456", true),
                 Arguments.of("Negative Decimal", "-1.0", true),
+                Arguments.of("Trailing Zeroes", "1.00000", true),
+                Arguments.of("Negative Zero Decimal", "-0.0", true),
                 Arguments.of("Trailing Decimal", "1.", false),
-                Arguments.of("Leading Decimal", ".5", false)
+                Arguments.of("Leading Decimal", ".5", false),
+                Arguments.of("Single Digit", "1", false),
+                Arguments.of("Double Decimal", "1..1", false),
+                Arguments.of("Multiple Decimal Points", "1.11.1", false),
+                Arguments.of("Comma Decimal (European Style)", "1,112", false)
         );
     }
 
@@ -174,6 +184,12 @@ public class LexerTests {
                         new Token(Token.Type.STRING, "\"Hello, World!\"", 6),
                         new Token(Token.Type.OPERATOR, ")", 21),
                         new Token(Token.Type.OPERATOR, ";", 22)
+                )),
+                Arguments.of("Example Multiple Decimal Points", "1.11.1;", Arrays.asList(
+                        new Token(Token.Type.DECIMAL, "1.11", 0),
+                        new Token(Token.Type.OPERATOR, ".", 4),
+                        new Token(Token.Type.INTEGER, "1", 5),
+                        new Token(Token.Type.OPERATOR, ";", 6)
                 ))
         );
     }
