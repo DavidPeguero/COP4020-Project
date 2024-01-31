@@ -46,10 +46,6 @@ public final class Lexer {
     private final String idStart = "@|[" + alphabet + "]";
     private final String opStart = "[!=]|&|\\||[^" + alphanumeric + whiteSpace +"]";
 
-
-
-
-
     /**
      * This method determines the type of the next token, delegating to the
      * appropriate lex method. As such, it is best for this method to not change
@@ -61,11 +57,15 @@ public final class Lexer {
     public Token lexToken() {
         // "([!=]=)?|&&|\\|\\||[^A-Za-z0-9_@]"
 
+        String numberStart = "0|-|[1-9]";
         if ( peek(idStart) ){
             return lexIdentifier();
         }
         else if(peek("\"")){
             return lexString();
+        }
+        else if ( peek(numberStart) ) {
+            return lexNumber();
         }
         else if ( peek(opStart) ) {
             return lexOperator();
@@ -83,17 +83,90 @@ public final class Lexer {
         match(idStart);
 
         // Check character by character
-        String idBody = "[" + alphanumeric+ "_-]*";
+        String idBody = "[" + alphanumeric + "_-]*";
         while(chars.has(0))
             if ( !match(idBody) ) // Not able to match while there are still characters in the token
-                throw new ParseException("Not a valid Identifier", chars.index);
+                return chars.emit(Token.Type.IDENTIFIER);
 
         // All characters in the string match identifier regex
         return chars.emit(Token.Type.IDENTIFIER);
     }
 
     public Token lexNumber() {
-        throw new UnsupportedOperationException(); //TODO
+        boolean isDecimal = false;
+
+        if (match("-")) {
+            if (match("[1-9]")) {
+                while (chars.has(0)) {
+
+                    // By default, check if there are any numbers to add to integer
+                    match("[" + numbers + "]");
+
+                    // Check if decimal point exists
+                    if (match("\\.", "[" + numbers + "]") && !isDecimal){
+                        isDecimal = true;
+                    }
+                    else {
+                        // Returns decimal or integer if no more matches are available
+                        if (isDecimal) {
+                            return chars.emit(Token.Type.DECIMAL);
+                        }
+                        return chars.emit(Token.Type.INTEGER);
+                    }
+                }
+            }
+            else if (match("0")) {
+                if (!match("\\.", "[" + numbers + "]")) {
+                    throw new ParseException("Invalid number", chars.index);
+                }
+
+                while (chars.has(0)) {
+                    if (!match("[" + numbers + "]")){
+                        return chars.emit(Token.Type.DECIMAL);
+                    }
+                }
+                return chars.emit(Token.Type.DECIMAL);
+            }
+        }
+        else if (match("0")) {
+            if (!match("\\.", "[" + numbers + "]")) {
+                return chars.emit(Token.Type.INTEGER);
+            }
+
+            while (chars.has(0)) {
+                if (!match("[" + numbers + "]")){
+                    return chars.emit(Token.Type.DECIMAL);
+                }
+            }
+            return chars.emit(Token.Type.DECIMAL);
+        }
+
+        // 1111.078
+        else if (match("[1-9]")) {
+            while (chars.has(0)) {
+
+                // By default, check if there are any numbers to add to integer
+                if (match("[" + numbers + "]"))
+                    continue;
+
+                // Check if decimal point exists
+                else if (match("\\.", "[" + numbers + "]") && !isDecimal){
+                    isDecimal = true;
+                }
+                else {
+                    // Returns decimal or integer if no more matches are available
+                    if (isDecimal) {
+                        return chars.emit(Token.Type.DECIMAL);
+                    }
+                    return chars.emit(Token.Type.INTEGER);
+                }
+            }
+        }
+
+        if (isDecimal)
+            return chars.emit(Token.Type.DECIMAL);
+
+        return chars.emit(Token.Type.INTEGER);
     }
 
     public Token lexCharacter() {
@@ -129,8 +202,8 @@ public final class Lexer {
     private void checkCompound(char input) {
 
         // If the compound is ever called after finding the second character, it is not a valid token
-        if (chars.length >= 1)
-            throw new ParseException("Not a valid Operation Token", chars.index);
+//        if (chars.length >= 1)
+//            throw new ParseException("Not a valid Operation Token", chars.index);
 
         // Start of new compound
         match(opStart);
@@ -142,24 +215,22 @@ public final class Lexer {
 
     public Token lexOperator() {
         // "([!=]=)?|&&|\\|\\||[^A-Za-z0-9_@]"
-        while (chars.has(0)){
-            // Different cases where we check for compound or single operator
-            switch (chars.get(0)){
-                case '!':
-                case '=':
-                    checkCompound('=');
-                    break;
-                case '&':
-                    checkCompound('&');
-                    break;
-                case '|':
-                    checkCompound('|');
-                    break;
-                default:
-                    if (chars.length == 1) {throw new ParseException("Not a valid operator token", chars.index);}
-                    match("[^" + idStart + whiteSpace + "]");
-            }
+        // Different cases where we check for compound or single operator
+        switch (chars.get(0)){
+            case '!':
+            case '=':
+                checkCompound('=');
+                break;
+            case '&':
+                checkCompound('&');
+                break;
+            case '|':
+                checkCompound('|');
+                break;
+            default:
+                match("[^" + idStart + whiteSpace + "]");
         }
+
         // Reaches this case if we have a valid operator
         return chars.emit(Token.Type.OPERATOR);
     }
