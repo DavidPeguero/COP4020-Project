@@ -60,21 +60,17 @@ public final class Lexer {
         String numberStart = "0|-|[1-9]";
         if ( peek(idStart) ){
             return lexIdentifier();
-        } else if (peek("'")) {
+        } else if ( peek("'") ) {
             return lexCharacter();
-        } else if(peek("\"")){
+        } else if( peek("\"") ){
             return lexString();
-        }
-        else if ( peek(numberStart) ) {
+        } else if ( peek(numberStart) ) {
             return lexNumber();
-        }
-        else if ( peek(opStart) ) {
+        } else if ( peek(opStart) ) {
             return lexOperator();
-        }
-        else  { // Catch all if token start is not valid
+        } else {
             throw new ParseException("Not a valid token", chars.index);
         }
-
     }
 
     // identifier ::= ( '@' | [A-Za-z] ) [A-Za-z0-9_-]*
@@ -226,6 +222,8 @@ public final class Lexer {
     }
 
     public void lexEscape() {
+        // Skip escape characters
+        // Call chars.advance and then chars.skip
         throw new UnsupportedOperationException(); //TODO
     }
 
