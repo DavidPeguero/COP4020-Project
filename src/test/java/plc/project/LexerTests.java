@@ -99,7 +99,20 @@ public class LexerTests {
                 Arguments.of("@ Symbol", "\'@\'", true),
                 Arguments.of("Empty", "\'\'", false),
                 Arguments.of("Unterminated Character", "\'", false),
-                Arguments.of("Multiple", "\'abc\'", false)
+                Arguments.of("Multiple", "\'abc\'", false),
+
+                // New Tests
+                Arguments.of("Terminated Only", "a\'", false),
+                Arguments.of("Tabline Escape", "\'\\t\'", true),
+                Arguments.of("Escape Literal", "\'\n\'", false),
+                Arguments.of("Escape Character", "\'\\\'", false),
+                Arguments.of("Single Quotes Surrounding Single Quote", "\'\'\'", false),
+                Arguments.of("Single Quotes Surrounding Escaped Single Quote", "\'\\\'\'", true),
+                Arguments.of("Multiple Escape Valid Sequences", "\'\\\'\\n\\r\'", false),
+                Arguments.of("Invalid Escape", "\'\\g\'", false),
+                Arguments.of("Number", "\'4\'", true),
+                Arguments.of("^ Symbol", "\'^\'", true),
+                Arguments.of("White space", "\' \'", true)
         );
     }
 

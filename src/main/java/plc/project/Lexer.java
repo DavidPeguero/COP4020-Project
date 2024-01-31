@@ -147,8 +147,9 @@ public final class Lexer {
             while (chars.has(0)) {
 
                 // By default, check if there are any numbers to add to integer
-                if (match("[" + numbers + "]"))
+                if (match("[" + numbers + "]")) {
                     continue;
+                }
 
                 // Check if decimal point exists
                 else if (peek("\\.", "[" + numbers + "]") && !isDecimal){
@@ -190,7 +191,7 @@ public final class Lexer {
                     throw new ParseException("Invalid Escape", chars.index);
                 }
             }
-            else if(match("[^'\\\\]")){
+            else if(match("[^\\n\\r'\\\\]")){
                 if(match("'")){
                     return chars.emit(Token.Type.CHARACTER);
                 }
@@ -198,6 +199,8 @@ public final class Lexer {
                     throw new ParseException("Not a valid character length", chars.index);
                 }
             } else if (match("'")) {
+                throw new ParseException("Not valid: empty character token", chars.index);
+            } else {
                 throw new ParseException("Not valid: empty character token", chars.index);
             }
         }
