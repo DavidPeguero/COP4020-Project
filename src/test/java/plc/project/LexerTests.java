@@ -190,6 +190,10 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, ".", 4),
                         new Token(Token.Type.INTEGER, "1", 5),
                         new Token(Token.Type.OPERATOR, ";", 6)
+                )),
+                Arguments.of("Not White Space", "one\btwo", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "one", 0),
+                        new Token(Token.Type.IDENTIFIER, "two", 4)
                 ))
         );
     }

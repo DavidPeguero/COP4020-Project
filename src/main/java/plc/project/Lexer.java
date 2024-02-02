@@ -33,7 +33,7 @@ public final class Lexer {
     public List<Token> lex() {
         List<Token> tokenList = new ArrayList<>();
         while (chars.has(0)){
-            if(match("\\s")){
+            if(match("[" + whiteSpace + "]")){
                 lexEscape();
             } else {
                 tokenList.add(lexToken());
