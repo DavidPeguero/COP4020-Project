@@ -200,7 +200,7 @@ public final class Parser {
         for (int i = 0; i < patterns.length; i++){
             if (!tokens.has(i)){
                 return false;
-            } else if (patterns[i] instanceof Token.type){
+            } else if (patterns[i] instanceof Token.Type){
                 if (patterns[i] != tokens.get(i).getType()){
                     return false;
                 }
