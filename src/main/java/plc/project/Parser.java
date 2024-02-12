@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -183,7 +185,25 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if(tokens.has(0)){
+            if(peek(Token.Type.DECIMAL)){
+                Ast.Expression.Literal decimal =  new Ast.Expression.Literal(new BigDecimal(tokens.get(0).getLiteral()));
+                match(Token.Type.DECIMAL);
+                return decimal;
+            }else if(peek(Token.Type.INTEGER)){
+                Ast.Expression.Literal integer =  new Ast.Expression.Literal(new BigInteger(tokens.get(0).getLiteral()));
+                match(Token.Type.INTEGER);
+                return integer;
+            }else if(peek(Token.Type.STRING)){
+                Ast.Expression.Literal string =  new Ast.Expression.Literal(tokens.get(0).getLiteral());
+                match(Token.Type.STRING);
+                return string;
+            }else if(peek(Token.Type.CHARACTER)){
+                Ast.Expression.Literal character =  new Ast.Expression.Literal(tokens.get(0).getLiteral());
+                match(Token.Type.CHARACTER);
+                return character;
+            }
+        }
     }
 
     /**
