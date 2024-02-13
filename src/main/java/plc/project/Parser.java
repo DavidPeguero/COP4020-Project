@@ -1,5 +1,6 @@
 package plc.project;
 
+import javax.management.BadAttributeValueExpException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -147,35 +148,98 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expression parseExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseLogicalExpression();
     }
 
     /**
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression left_result = parseComparisonExpression();
+
+        if (peek(Token.Type.OPERATOR)){
+            switch (tokens.get(0).getLiteral()) {
+                case "&&":
+                case "||":
+                    String operator = tokens.get(0).getLiteral();
+                    match(operator);
+                    return new Ast.Expression.Binary(
+                            operator,
+                            left_result,
+                            parseLogicalExpression()
+                    );
+            }
+        }
+        return left_result;
     }
 
     /**
      * Parses the {@code comparison-expression} rule.
      */
     public Ast.Expression parseComparisonExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression left_result = parseAdditiveExpression();
+
+        if (peek(Token.Type.OPERATOR)){
+            switch (tokens.get(0).getLiteral()) {
+                case "<":
+                case ">":
+                case "==":
+                case "!=":
+                    String operator = tokens.get(0).getLiteral();
+                    match(operator);
+                    return new Ast.Expression.Binary(
+                            operator,
+                            left_result,
+                            parseComparisonExpression()
+                    );
+            }
+        }
+        return left_result;
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression left_result = parseMultiplicativeExpression();
+
+        if (peek(Token.Type.OPERATOR)){
+            switch (tokens.get(0).getLiteral()) {
+                case "+":
+                case "-":
+                    String operator = tokens.get(0).getLiteral();
+                    match(operator);
+                    return new Ast.Expression.Binary(
+                            operator,
+                            left_result,
+                            parseAdditiveExpression()
+                    );
+            }
+        }
+        return left_result;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expression left_result = parsePrimaryExpression();
+
+        if (peek(Token.Type.OPERATOR)) {
+            switch (tokens.get(0).getLiteral()) {
+                case "*":
+                case "/":
+                case "^":
+                    String operator = tokens.get(0).getLiteral();
+                    match(operator);
+                    return new Ast.Expression.Binary(
+                            operator,
+                            left_result,
+                            parseMultiplicativeExpression()
+                    );
+            }
+        }
+        return left_result;
     }
 
     /**
@@ -202,24 +266,23 @@ public final class Parser {
                 Ast.Expression.Literal character = new Ast.Expression.Literal(tokens.get(0).getLiteral());
                 match(Token.Type.CHARACTER);
                 return character;
-                // TODO: Finish identifier '[' expression ']'
-                // TODO: 'NIL' | 'TRUE' | 'FALSE'
-                if (peek(Token.Type.IDENTIFIER)) {
-                    if (tokens.get(0).getLiteral() == null) {
-                        tokens.advance();
-                        return new Ast.Expression.Literal(null);
-                    } else if (tokens.get(0).getLiteral().equals("FALSE")){
-                        tokens.advance();
-                        return new Ast.Expression.Literal(false);
-                    } else if (tokens.get(0).getLiteral().equals("TRUE")){
-                        tokens.advance();
-                        return new Ast.Expression.Literal(true);
-                    }
+            }
+
+            // TODO: Finish identifier '[' expression ']'
+            if (peek(Token.Type.IDENTIFIER)) {
+                if (tokens.get(0).getLiteral() == null) {
+                    tokens.advance();
+                    return new Ast.Expression.Literal(null);
+                } else if (tokens.get(0).getLiteral().equals("FALSE")){
+                    tokens.advance();
+                    return new Ast.Expression.Literal(Boolean.FALSE);
+                } else if (tokens.get(0).getLiteral().equals("TRUE")){
+                    tokens.advance();
+                    return new Ast.Expression.Literal(Boolean.TRUE);
                 }
-
-
             }
         }
+        throw new ParseException("Invalid Primary Expression", tokens.index);
     }
 
     /**
