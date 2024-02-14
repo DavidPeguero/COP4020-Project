@@ -320,14 +320,15 @@ public final class Parser {
                     } else if(peek("[")){
 
                     } else{
-                        return new Ast.Expression.Literal(identifierLiteral);
+                        return new Ast.Expression.Access(Optional.empty(), identifierLiteral);
                     }
                 }
             } else if (peek("(")) { // '(' expression ')'
                 match("(");
-                Ast.Expression group = new Ast.Expression.Group(parseExpression());
+
+                Ast.Expression expr = parseExpression();
                 if (match(")"))
-                    return group;
+                    return new Ast.Expression.Group(expr);
                 else
                     throw new ParseException("Expected a Right Parenthesis", tokens.index);
             }
