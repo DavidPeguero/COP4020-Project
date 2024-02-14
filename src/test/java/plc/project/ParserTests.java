@@ -85,7 +85,22 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ";", 6)
                         ),
                         new Ast.Statement.Expression(new Ast.Expression.Function("name", Arrays.asList()))
-                )
+                ),
+                Arguments.of("Assignment Expression",
+                        Arrays.asList(
+                                // name = 4;
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "=", 5),
+                                new Token(Token.Type.INTEGER, "4", 7),
+                                new Token(Token.Type.OPERATOR, ";", 8)
+                        ),
+                        new Ast.Statement.Expression(
+                                new Ast.Expression.Binary(
+                                        "=",
+                                        new Ast.Expression.Access(Optional.empty(), "name"),
+                                        new Ast.Expression.Literal(new BigInteger("4"))
+                                ))
+                        )
         );
     }
 

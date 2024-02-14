@@ -89,7 +89,33 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Statement parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+
+        // Technically the last check needed in parsing statements
+        if (tokens.has(0)){
+
+            // expression (= expression)? ;
+            Ast.Expression expr = parseExpression();
+
+            Ast.Statement.Expression statement;
+            if (peek("=")) { // Go into a binary expression
+                String op = tokens.get(0).getLiteral();
+                match("=");
+
+                statement = new Ast.Statement.Expression(new Ast.Expression.Binary(op, expr, parseExpression()));
+
+                if (!match(";"))
+                    throw new ParseException("Missing Semicolon", tokens.index);
+                else
+                    return statement;
+            }
+
+            if (match(";")) { // Only the single expression
+                return new Ast.Statement.Expression(expr);
+            } else
+                throw new ParseException("Missing Semicolon", tokens.index);
+        }
+
+        throw new ParseException("Invalid Statement", tokens.index);
     }
 
     /**
@@ -102,6 +128,7 @@ public final class Parser {
         // 'SWITCH'
         // 'IF'
         // 'WHILE
+
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -301,6 +328,7 @@ public final class Parser {
                         List<Ast.Expression> parameters = new ArrayList<Ast.Expression>();
                         tokens.advance();
                         if(peek(Token.Type.OPERATOR) && peek(")")){
+                            tokens.advance();
                             return new Ast.Expression.Function(identifierLiteral, parameters);
 
                         } else { //Check for Identifier if not an empty parameter list
