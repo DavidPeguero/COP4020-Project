@@ -3,7 +3,9 @@ package plc.project;
 import javax.management.BadAttributeValueExpException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -266,10 +268,7 @@ public final class Parser {
                 Ast.Expression.Literal character = new Ast.Expression.Literal(tokens.get(0).getLiteral());
                 match(Token.Type.CHARACTER);
                 return character;
-            }
-
-            // TODO: Finish identifier '[' expression ']'
-            if (peek(Token.Type.IDENTIFIER)) {
+            }else if (peek(Token.Type.IDENTIFIER)) {
                 if (tokens.get(0).getLiteral() == null) {
                     tokens.advance();
                     return new Ast.Expression.Literal(null);
@@ -279,6 +278,34 @@ public final class Parser {
                 } else if (tokens.get(0).getLiteral().equals("TRUE")){
                     tokens.advance();
                     return new Ast.Expression.Literal(Boolean.TRUE);
+                } else{
+                    String identifierLiteral = tokens.get(0).getLiteral();
+                    tokens.advance();
+                    if(tokens.has(0) && peek(Token.Type.OPERATOR) && peek("(")){
+                        List<Ast.Expression> parameters = new ArrayList<Ast.Expression>();
+                        tokens.advance();
+                        if(peek(Token.Type.OPERATOR) && peek(")")){
+                            return new Ast.Expression.Function(identifierLiteral, parameters);
+
+                        } else { //Check for Identifier if not an empty parameter list
+                            parameters.add(parseExpression());
+                            //While we find comma indicating more parameters
+                            while(peek(Token.Type.OPERATOR) && peek(",")){
+                                tokens.advance();
+                                parameters.add(parseExpression());
+                                //Add parameters to list
+                            }
+                            if(!match(')')){ //No matching right parentheses
+                                throw new ParseException("No right parentheses found", tokens.index);
+                            } else{ //Otherwise return the function and the parameters added
+                                return new Ast.Expression.Function(identifierLiteral, parameters);
+                            }
+                        }
+                    } else if(peek("[")){
+
+                    } else{
+                        return new Ast.Expression.Literal(identifierLiteral);
+                    }
                 }
             }
         }
