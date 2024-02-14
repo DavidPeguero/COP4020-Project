@@ -339,14 +339,19 @@ public final class Parser {
                                 parameters.add(parseExpression());
                                 //Add parameters to list
                             }
-                            if(!match(')')){ //No matching right parentheses
+                            if(!match(")")){ //No matching right parentheses
                                 throw new ParseException("No right parentheses found", tokens.index);
                             } else{ //Otherwise return the function and the parameters added
                                 return new Ast.Expression.Function(identifierLiteral, parameters);
                             }
                         }
-                    } else if(peek("[")){
+                    } else if(match("[")){
+                        Ast.Expression tempExp = parseExpression();
 
+                        if(match("]"))
+                            return new Ast.Expression.Access(Optional.of(tempExp), identifierLiteral);
+                        else
+                            throw new ParseException("No matching right bracket", tokens.index);
                     } else{
                         return new Ast.Expression.Access(Optional.empty(), identifierLiteral);
                     }
