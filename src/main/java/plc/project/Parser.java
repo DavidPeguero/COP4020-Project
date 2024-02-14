@@ -265,11 +265,23 @@ public final class Parser {
                 match(Token.Type.INTEGER);
                 return integer;
             } else if (peek(Token.Type.STRING)) {
-                Ast.Expression.Literal string = new Ast.Expression.Literal(tokens.get(0).getLiteral());
+                String formattedString = tokens.get(0).getLiteral();
+                formattedString = formattedString.replace("\"", "");
+                formattedString = formattedString.replace("\\b", "\b");
+                formattedString = formattedString.replace("\\n", "\n");
+                formattedString = formattedString.replace("\\r", "\r");
+                formattedString = formattedString.replace("\\t", "\t");
+                Ast.Expression.Literal string = new Ast.Expression.Literal(formattedString);
                 match(Token.Type.STRING);
                 return string;
             } else if (peek(Token.Type.CHARACTER)) {
-                Ast.Expression.Literal character = new Ast.Expression.Literal(tokens.get(0).getLiteral());
+                String formattedChar = tokens.get(0).getLiteral();
+                formattedChar = formattedChar.replace("'", "");
+                formattedChar = formattedChar.replace("\\b", "\b");
+                formattedChar = formattedChar.replace("\\n", "\n");
+                formattedChar = formattedChar.replace("\\r", "\r");
+                formattedChar = formattedChar.replace("\\t", "\t");
+                Ast.Expression.Literal character = new Ast.Expression.Literal(formattedChar.charAt(0));
                 match(Token.Type.CHARACTER);
                 return character;
             } else if (peek(Token.Type.IDENTIFIER)) {
