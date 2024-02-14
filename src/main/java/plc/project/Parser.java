@@ -98,6 +98,10 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
+        // 'Let'
+        // 'SWITCH'
+        // 'IF'
+        // 'WHILE
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -268,16 +272,16 @@ public final class Parser {
                 Ast.Expression.Literal character = new Ast.Expression.Literal(tokens.get(0).getLiteral());
                 match(Token.Type.CHARACTER);
                 return character;
-            }else if (peek(Token.Type.IDENTIFIER)) {
+            } else if (peek(Token.Type.IDENTIFIER)) {
                 if (tokens.get(0).getLiteral() == null) {
                     tokens.advance();
                     return new Ast.Expression.Literal(null);
                 } else if (tokens.get(0).getLiteral().equals("FALSE")){
                     tokens.advance();
-                    return new Ast.Expression.Literal(Boolean.FALSE);
+                    return new Ast.Expression.Literal(false);
                 } else if (tokens.get(0).getLiteral().equals("TRUE")){
                     tokens.advance();
-                    return new Ast.Expression.Literal(Boolean.TRUE);
+                    return new Ast.Expression.Literal(true);
                 } else{
                     String identifierLiteral = tokens.get(0).getLiteral();
                     tokens.advance();
@@ -307,6 +311,13 @@ public final class Parser {
                         return new Ast.Expression.Literal(identifierLiteral);
                     }
                 }
+            } else if (peek("(")) { // '(' expression ')'
+                match("(");
+                Ast.Expression group = new Ast.Expression.Group(parseExpression());
+                if (match(")"))
+                    return group;
+                else
+                    throw new ParseException("Expected a Right Parenthesis", tokens.index);
             }
         }
         throw new ParseException("Invalid Primary Expression", tokens.index);
