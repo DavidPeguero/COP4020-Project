@@ -94,14 +94,20 @@ public final class Parser {
         if (tokens.has(0)){
 
             // expression (= expression)? ;
+            String receiver = tokens.get(0).getLiteral();
             Ast.Expression expr = parseExpression();
 
-            Ast.Statement.Expression statement;
-            if (peek("=")) { // Go into a binary expression
+            Ast.Statement statement;
+            if (peek("=")) { // Go into a assignment expression
                 String op = tokens.get(0).getLiteral();
                 match("=");
+                String value = tokens.get(0).getLiteral();
 
-                statement = new Ast.Statement.Expression(new Ast.Expression.Binary(op, expr, parseExpression()));
+                statement = new Ast.Statement.Assignment(
+                        new Ast.Expression.Access(Optional.empty(), receiver),
+                        new Ast.Expression.Access(Optional.empty(), value));
+
+                tokens.advance();
 
                 if (!match(";"))
                     throw new ParseException("Missing Semicolon", tokens.index);
