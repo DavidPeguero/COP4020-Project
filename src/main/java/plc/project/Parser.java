@@ -37,7 +37,7 @@ ParserTests (31/36):
  * #match(Object...)} are helpers to make the implementation easier.
  *
  * This type of parser is called <em>recursive descent</em>. Each rule in our
- * grammar will have it's own function, and reference to other rules correspond
+ * grammar will have its own function, and reference to other rules correspond
  * to calling that functions.
  */
 public final class Parser {
@@ -46,6 +46,25 @@ public final class Parser {
 
     public Parser(List<Token> tokens) {
         this.tokens = new TokenStream(tokens);
+    }
+
+    // Keep track of the last token that was matched
+    Token currentMatchedToken = null;
+
+    // Keep track of the current running index of matched tokens; index will be the first character of last token
+    // int CURRENT_TOKEN_TOTAL_CHAR_INDEX = 0;
+    public void handleError(String message, boolean isUnexpectedToken) throws ParseException {
+        // Two cases
+
+        // Error at an unexpected token [wrong token type at position]
+        // return index of unexpected token in entire stream
+        if (isUnexpectedToken)
+            throw new ParseException(message, currentMatchedToken.getIndex());
+
+
+        // Error at the end of a stream of valid tokens in grammar [Missing the rest]
+        // should return index of character after last valid one
+        throw new ParseException(message, currentMatchedToken.getIndex() + currentMatchedToken.getLiteral().length());
     }
 
     /**
@@ -114,23 +133,21 @@ public final class Parser {
         if (tokens.has(0)){
 
             // expression (= expression)? ;
+            // ex1 = () || ()
             String receiver = tokens.get(0).getLiteral();
             Ast.Expression expr = parseExpression();
 
             Ast.Statement statement;
-            if (peek("=")) { // Go into an assignment expression
-                String op = tokens.get(0).getLiteral();
-                match("=");
+            if (match("=")) { // Go into an assignment expression
                 String value = tokens.get(0).getLiteral();
-
                 statement = new Ast.Statement.Assignment(
                         new Ast.Expression.Access(Optional.empty(), receiver),
                         new Ast.Expression.Access(Optional.empty(), value));
 
-                tokens.advance();
+                parseExpression();
 
                 if (!match(";"))
-                    throw new ParseException("Missing Semicolon", tokens.index);
+                    handleError("Missing Semicolon", false);
                 else
                     return statement;
             }
@@ -138,10 +155,14 @@ public final class Parser {
             if (match(";")) { // Only the single expression
                 return new Ast.Statement.Expression(expr);
             } else
-                throw new ParseException("Missing Semicolon", tokens.index);
+                handleError("Missing Semicolon", false);
         }
 
-        throw new ParseException("Invalid Statement", tokens.index);
+//        if (currentMatchedToken == null)
+//            throw new ParseException("Invalid Statement", 0);
+//
+//        throw new ParseException("Invalid Statement", currentMatchedToken.getIndex());
+        return null;
     }
 
     /**
@@ -355,65 +376,62 @@ public final class Parser {
                 return character;
             } else if (peek(Token.Type.IDENTIFIER)) {
                 if (tokens.get(0).getLiteral().equals("NIL") || tokens.get(0).getLiteral() == null) {
-                    tokens.advance();
+                    match(Token.Type.IDENTIFIER);
                     return new Ast.Expression.Literal(null);
                 } else if (tokens.get(0).getLiteral().equals("FALSE")){
-                    tokens.advance();
+                    match(Token.Type.IDENTIFIER);
                     return new Ast.Expression.Literal(Boolean.FALSE);
                 } else if (tokens.get(0).getLiteral().equals("TRUE")){
-                    tokens.advance();
+                    match(Token.Type.IDENTIFIER);
                     return new Ast.Expression.Literal(Boolean.TRUE);
                 } else{
                     String identifierLiteral = tokens.get(0).getLiteral();
-                    tokens.advance();
+                    match(Token.Type.IDENTIFIER);
                     if(tokens.has(0) && peek(Token.Type.OPERATOR) && peek("(")){
                         List<Ast.Expression> parameters = new ArrayList<Ast.Expression>();
-                        tokens.advance();
+                        match("(");
                         if(peek(Token.Type.OPERATOR) && peek(")")){
-                            tokens.advance();
+                            match(")");
                             return new Ast.Expression.Function(identifierLiteral, parameters);
 
                         } else { //Check for Identifier if not an empty parameter list
                             parameters.add(parseExpression());
                             //While we find comma indicating more parameters
                             while(peek(Token.Type.OPERATOR) && peek(",")){
-                                tokens.advance();
+                                match(",");
                                 parameters.add(parseExpression());
                                 //Add parameters to list
                             }
                             if(!match(")")){ //No matching right parentheses
-                                throw new ParseException("No right parentheses found", tokens.index);
+                                handleError("No right parentheses found", false);
                             } else{ //Otherwise return the function and the parameters added
                                 return new Ast.Expression.Function(identifierLiteral, parameters);
                             }
                         }
                     } else if(match("[")){
                         Ast.Expression tempExp = parseExpression();
-
                         if(match("]"))
                             return new Ast.Expression.Access(Optional.of(tempExp), identifierLiteral);
                         else
-                            throw new ParseException("No matching right bracket", tokens.index);
+                            handleError("No matching right bracket", false);
                     } else{
                         return new Ast.Expression.Access(Optional.empty(), identifierLiteral);
                     }
                 }
-            } else if (peek("(")) { // '(' expression ')'
-                match("(");
-
+            } else if (match("(")) { // '(' expression ')'
                 if (!tokens.has(0))
-                    throw new ParseException("Missing Expression", tokens.index);
-
+                    handleError("Expecting Expression after Opening Parenthesis", false);
                 // Getting accurate token index according to ParseException Specs
-                int expressionLength = tokens.get(0).getLiteral().length();
                 Ast.Expression expr = parseExpression();
                 if (!match(")"))
-                    throw new ParseException("Expected a Right Parenthesis", tokens.index + expressionLength);
+                    handleError("Expected a Closing Parenthesis", false);
 
                 return new Ast.Expression.Group(expr);
             }
         }
-        throw new ParseException("Invalid Primary Expression", tokens.index);
+
+        // Can't use handleError here
+        throw new ParseException("Expected Primary Expression", currentMatchedToken.getIndex());
     }
 
     /**
@@ -455,6 +473,10 @@ public final class Parser {
 
         if (peek) {
             for (int i = 0; i < patterns.length; i++){
+                // NEW
+                currentMatchedToken = tokens.get(0);
+                // NEW
+
                 tokens.advance();
             }
         }
