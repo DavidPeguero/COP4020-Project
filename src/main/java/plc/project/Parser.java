@@ -6,17 +6,18 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicStampedReference;
 
 /*
 ParserTests (31/36):
     Expr (20/23):
         // FIXED: Literal (6/7): Nil Literal: Incorrect result, received Ast.Expression.Access{offset=Optional.empty, name='NIL'}
         Priority (1/3):
-            And Or: Incorrect result,
+            // FIXED: And Or: Incorrect result,
                 received Ast.Expression.Binary{operator='&&', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
                         right=Ast.Expression.Binary{operator='||', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
                         right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
-            Equals Not Equals: Incorrect result,
+            //FIXED: Equals Not Equals: Incorrect result,
                 received Ast.Expression.Binary{operator='==', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
                         right=Ast.Expression.Binary{operator='!=', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
                         right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
@@ -117,7 +118,7 @@ public final class Parser {
             Ast.Expression expr = parseExpression();
 
             Ast.Statement statement;
-            if (peek("=")) { // Go into a assignment expression
+            if (peek("=")) { // Go into an assignment expression
                 String op = tokens.get(0).getLiteral();
                 match("=");
                 String value = tokens.get(0).getLiteral();
@@ -213,31 +214,35 @@ public final class Parser {
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        Ast.Expression left_result = parseComparisonExpression();
+        Ast.Expression expression = parseComparisonExpression();
 
-        if (peek(Token.Type.OPERATOR)){
+        while (peek(Token.Type.OPERATOR)){
             switch (tokens.get(0).getLiteral()) {
                 case "&&":
                 case "||":
                     String operator = tokens.get(0).getLiteral();
                     match(operator);
-                    return new Ast.Expression.Binary(
-                            operator,
-                            left_result,
-                            parseLogicalExpression()
-                    );
+                    Ast.Expression right = parseComparisonExpression();
+                    expression = new Ast.Expression.Binary(
+                        operator,
+                        expression,
+                        right
+                );
+                    continue;
+                default:
             }
+            break;
         }
-        return left_result;
+        return expression;
     }
 
     /**
      * Parses the {@code comparison-expression} rule.
      */
     public Ast.Expression parseComparisonExpression() throws ParseException {
-        Ast.Expression left_result = parseAdditiveExpression();
+        Ast.Expression additiveExpression = parseAdditiveExpression();
 
-        if (peek(Token.Type.OPERATOR)){
+        while (peek(Token.Type.OPERATOR)){
             switch (tokens.get(0).getLiteral()) {
                 case "<":
                 case ">":
@@ -245,59 +250,71 @@ public final class Parser {
                 case "!=":
                     String operator = tokens.get(0).getLiteral();
                     match(operator);
-                    return new Ast.Expression.Binary(
+                    Ast.Expression rightAdditiveExpression = parseAdditiveExpression();
+                    additiveExpression = new Ast.Expression.Binary(
                             operator,
-                            left_result,
-                            parseComparisonExpression()
+                            additiveExpression,
+                            rightAdditiveExpression
                     );
+                    continue;
+                default:
             }
+            break;
         }
-        return left_result;
+        return additiveExpression;
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        Ast.Expression left_result = parseMultiplicativeExpression();
+        Ast.Expression multiplicativeExpression = parseMultiplicativeExpression();
 
-        if (peek(Token.Type.OPERATOR)){
+        while (peek(Token.Type.OPERATOR)){
             switch (tokens.get(0).getLiteral()) {
                 case "+":
                 case "-":
                     String operator = tokens.get(0).getLiteral();
                     match(operator);
-                    return new Ast.Expression.Binary(
+                    Ast.Expression rightMultiplicativeExpression = parseMultiplicativeExpression();
+                    multiplicativeExpression = new Ast.Expression.Binary(
                             operator,
-                            left_result,
-                            parseAdditiveExpression()
+                            multiplicativeExpression,
+                            rightMultiplicativeExpression
                     );
+                    continue;
+                default:
             }
+            break;
         }
-        return left_result;
+        return multiplicativeExpression;
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        Ast.Expression left_result = parsePrimaryExpression();
+        Ast.Expression leftPrimaryExpression = parsePrimaryExpression();
 
-        if (peek(Token.Type.OPERATOR)) {
+        while (peek(Token.Type.OPERATOR)) {
             switch (tokens.get(0).getLiteral()) {
                 case "*":
                 case "/":
                 case "^":
                     String operator = tokens.get(0).getLiteral();
                     match(operator);
-                    return new Ast.Expression.Binary(
+                    Ast.Expression rightPrimaryExpression = parsePrimaryExpression();
+                    leftPrimaryExpression = new Ast.Expression.Binary(
                             operator,
-                            left_result,
-                            parseMultiplicativeExpression()
+                            leftPrimaryExpression,
+                            rightPrimaryExpression
                     );
+                    continue;
+                default:
             }
+            break;
         }
-        return left_result;
+        return leftPrimaryExpression;
     }
 
     /**
