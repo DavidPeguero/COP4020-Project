@@ -7,6 +7,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/*
+ParserTests (31/36):
+    Expr (20/23):
+        // FIXED: Literal (6/7): Nil Literal: Incorrect result, received Ast.Expression.Access{offset=Optional.empty, name='NIL'}
+        Priority (1/3):
+            And Or: Incorrect result,
+                received Ast.Expression.Binary{operator='&&', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
+                        right=Ast.Expression.Binary{operator='||', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
+                        right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
+            Equals Not Equals: Incorrect result,
+                received Ast.Expression.Binary{operator='==', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
+                        right=Ast.Expression.Binary{operator='!=', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
+                        right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
+        Error (1/3):
+            // FIXED: Missing Closing Parenthesis: Incorrect index, received 2.
+            // FIXED: Invalid Closing Parenthesis: Incorrect index, received 2.
+
+ */
+
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
  * into a structured representation of the program, called the Abstract Syntax
@@ -318,15 +337,15 @@ public final class Parser {
                 match(Token.Type.CHARACTER);
                 return character;
             } else if (peek(Token.Type.IDENTIFIER)) {
-                if (tokens.get(0).getLiteral() == null) {
+                if (tokens.get(0).getLiteral().equals("NIL") || tokens.get(0).getLiteral() == null) {
                     tokens.advance();
                     return new Ast.Expression.Literal(null);
                 } else if (tokens.get(0).getLiteral().equals("FALSE")){
                     tokens.advance();
-                    return new Ast.Expression.Literal(false);
+                    return new Ast.Expression.Literal(Boolean.FALSE);
                 } else if (tokens.get(0).getLiteral().equals("TRUE")){
                     tokens.advance();
-                    return new Ast.Expression.Literal(true);
+                    return new Ast.Expression.Literal(Boolean.TRUE);
                 } else{
                     String identifierLiteral = tokens.get(0).getLiteral();
                     tokens.advance();
@@ -365,11 +384,16 @@ public final class Parser {
             } else if (peek("(")) { // '(' expression ')'
                 match("(");
 
+                if (!tokens.has(0))
+                    throw new ParseException("Missing Expression", tokens.index);
+
+                // Getting accurate token index according to ParseException Specs
+                int expressionLength = tokens.get(0).getLiteral().length();
                 Ast.Expression expr = parseExpression();
-                if (match(")"))
-                    return new Ast.Expression.Group(expr);
-                else
-                    throw new ParseException("Expected a Right Parenthesis", tokens.index);
+                if (!match(")"))
+                    throw new ParseException("Expected a Right Parenthesis", tokens.index + expressionLength);
+
+                return new Ast.Expression.Group(expr);
             }
         }
         throw new ParseException("Invalid Primary Expression", tokens.index);
