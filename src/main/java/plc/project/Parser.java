@@ -9,21 +9,47 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 /*
-ParserTests (31/36):
-    Expr (20/23):
-        // FIXED: Literal (6/7): Nil Literal: Incorrect result, received Ast.Expression.Access{offset=Optional.empty, name='NIL'}
-        Priority (1/3):
-            // FIXED: And Or: Incorrect result,
-                received Ast.Expression.Binary{operator='&&', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
-                        right=Ast.Expression.Binary{operator='||', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
-                        right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
-            //FIXED: Equals Not Equals: Incorrect result,
-                received Ast.Expression.Binary{operator='==', left=Ast.Expression.Access{offset=Optional.empty, name='expr1'},
-                        right=Ast.Expression.Binary{operator='!=', left=Ast.Expression.Access{offset=Optional.empty, name='expr2'},
-                        right=Ast.Expression.Access{offset=Optional.empty, name='expr3'}}}
-        Error (1/3):
-            // FIXED: Missing Closing Parenthesis: Incorrect index, received 2.
-            // FIXED: Invalid Closing Parenthesis: Incorrect index, received 2.
+ParserTests (47/53):
+    Statement (7/10):
+        Assignment (4/7):
+            Complex Value: Incorrect result,
+                received Ast.Statement.Assignment
+                    {receiver=Ast.Expression.Access
+                        {offset=Optional.empty, name='name'},
+                        value=Ast.Expression.Access
+                            {offset=Optional.empty, name='expr1'}
+                    }
+            List 1: Incorrect result,
+                received Ast.Statement.Assignment
+                    {receiver=Ast.Expression.Access
+                        {offset=Optional.empty, name='list'},
+                        value=Ast.Expression.Access{offset=Optional.empty, name='expr'}
+                    }
+            List 2: Incorrect result,
+                received Ast.Statement.Assignment
+                    {receiver=Ast.Expression.Access
+                        {offset=Optional.empty, name='list'},
+                        value=Ast.Expression.Access{offset=Optional.empty, name='expr1'}
+                    }
+    Expression (39/41):
+        Literal (6/8):
+            Char Escapes (0/1):
+                Char Escape '\'': Incorrect result,
+                    received Ast.Expression.Literal
+                        {literal=\}
+                Char Escape '\"': Incorrect result,
+                    received Ast.Expression.Literal{literal=\}
+            String Escapes (0/1):
+                String Escape "\'": Incorrect result,
+                    received Ast.Expression.Literal{literal=\'}
+                String Escape "\"": Incorrect result,
+                    received Ast.Expression.Literal{literal=\}
+                String Escape "\\": Incorrect result,
+                    received Ast.Expression.Literal{literal=\\}
+    Error (check for correct index) (1/2):
+        Invalid Expression:
+            Unexpected java.lang.NullPointerException:
+                Cannot invoke "plc.project.Token.getIndex()" because "this.currentMatchedToken" is null
 
  */
 
@@ -129,40 +155,57 @@ public final class Parser {
      */
     public Ast.Statement parseStatement() throws ParseException {
 
-        // Technically the last check needed in parsing statements
-        if (tokens.has(0)){
+        Ast.Statement statement;
 
-            // expression (= expression)? ;
-            // ex1 = () || ()
-            String receiver = tokens.get(0).getLiteral();
+        if (peek("LET")){
+            statement = parseDeclarationStatement();
+        } else if(peek("SWITCH")){
+            statement = parseSwitchStatement();
+        } else if(peek("IF")){
+            statement = parseIfStatement();
+        } else if(peek("WHILE")){
+            statement = parseWhileStatement();
+        } else if (peek("RETURN")) {
+            statement = parseReturnStatement();
+        } else {
             Ast.Expression expr = parseExpression();
-
-            Ast.Statement statement;
-            if (match("=")) { // Go into an assignment expression
-                String value = tokens.get(0).getLiteral();
-                statement = new Ast.Statement.Assignment(
-                        new Ast.Expression.Access(Optional.empty(), receiver),
-                        new Ast.Expression.Access(Optional.empty(), value));
-
-                parseExpression();
-
-                if (!match(";"))
-                    handleError("Missing Semicolon", false);
-                else
-                    return statement;
-            }
-
-            if (match(";")) { // Only the single expression
-                return new Ast.Statement.Expression(expr);
-            } else
-                handleError("Missing Semicolon", false);
+            statement =  new Ast.Statement.Expression(expr);
         }
 
-//        if (currentMatchedToken == null)
-//            throw new ParseException("Invalid Statement", 0);
+        if (!match(";"))
+            handleError("Expected semicolon", false);
+
+
+//        // Technically the last check needed in parsing statements
+//        if (tokens.has(0)){
 //
-//        throw new ParseException("Invalid Statement", currentMatchedToken.getIndex());
-        return null;
+//            // expression (= expression)? ;
+//            // ex1 = () || ()
+//            String receiver = tokens.get(0).getLiteral();
+//            Ast.Expression expr = parseExpression();
+//
+//            // Ast.Statement statement;
+//            if (match("=")) { // Go into an assignment expression
+//                String value = tokens.get(0).getLiteral();
+//                statement = new Ast.Statement.Assignment(
+//                        new Ast.Expression.Access(Optional.empty(), receiver),
+//                        new Ast.Expression.Access(Optional.empty(), value));
+//
+//                parseExpression();
+//
+//                if (!match(";"))
+//                    handleError("Missing Semicolon", false);
+//                else
+//                    return statement;
+//            }
+//
+//            if (match(";")) { // Only the single expression
+//                return new Ast.Statement.Expression(expr);
+//            } else
+//                handleError("Missing Semicolon", false);
+//        }
+
+        return statement;
     }
 
     /**
@@ -171,12 +214,24 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        // 'Let'
-        // 'SWITCH'
-        // 'IF'
-        // 'WHILE
+        // 'Let' identifier (= expression)? ;
 
-        throw new UnsupportedOperationException(); //TODO
+        //throw new UnsupportedOperationException();
+        match("LET");
+        if (!match(Token.Type.IDENTIFIER))
+            handleError("Expected identifier in declaration", false);
+
+        String name = tokens.get(-1).getLiteral();
+
+        // Optional type that contains an Ast.Expression
+        Optional<Ast.Expression> value = Optional.empty();
+
+        if (match("=")){
+            // Creates an Optional<Ast.Expression> object
+            value = Optional.of(parseExpression());
+        }
+
+        return new Ast.Statement.Declaration(name, value);
     }
 
     /**
