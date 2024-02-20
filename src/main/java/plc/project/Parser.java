@@ -97,7 +97,15 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Global> globals = new ArrayList<>();
+        List<Ast.Function> functions = new ArrayList<>();
+        while(tokens.has(0) && (peek("LIST") || peek("VAR") || peek("VAL"))){
+            globals.add(parseGlobal());
+        }
+        while(tokens.has(0) && peek("FUN")){
+            functions.add(parseFunction());
+        }
+        return new Ast.Source(globals, functions);
     }
 
     /**
@@ -105,7 +113,23 @@ public final class Parser {
      * next tokens start a global, aka {@code LIST|VAL|VAR}.
      */
     public Ast.Global parseGlobal() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Global global = null;
+        if(match("LIST")){
+            global = parseList();
+        } else if (match("VAR")){
+            global = parseMutable();
+        } else if (match("VAL")){
+            global = parseImmutable();
+        } else {
+            handleError("Not a valid global Start", true);
+        }
+
+        if(!match(";")){
+            handleError("Missing Semicolon", false);
+        }
+
+        return global;
+
     }
 
     /**
@@ -113,7 +137,18 @@ public final class Parser {
      * next token declares a list, aka {@code LIST}.
      */
     public Ast.Global parseList() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        String id = tokens.get(0).getLiteral();
+        Ast.Global newGlobal = null;
+        tokens.advance();
+        if(match("=", "[")){
+            //Parse Exception
+            parseExpression();
+            while(match(',')){
+                handleError("Dunno", false);
+            }
+
+        }
+        return null;
     }
 
     /**
@@ -121,7 +156,22 @@ public final class Parser {
      * next token declares a mutable global variable, aka {@code VAR}.
      */
     public Ast.Global parseMutable() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        String id;
+        Ast.Global newGlobal = null;
+        if(peek(Token.Type.IDENTIFIER)){
+            id = tokens.get(0).getLiteral();
+            if(match("=")){
+                newGlobal = new Ast.Global(id, true, Optional.of(parseExpression()));
+                return newGlobal;
+            }
+            else{
+                newGlobal = new Ast.Global(id, true, Optional.empty());
+                return newGlobal;
+            }
+        } else {
+            handleError("Expected Identifier", true);
+        }
+        return newGlobal;
     }
 
     /**
@@ -129,7 +179,22 @@ public final class Parser {
      * next token declares an immutable global variable, aka {@code VAL}.
      */
     public Ast.Global parseImmutable() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        String id;
+        Ast.Global newGlobal = null;
+        if(peek(Token.Type.IDENTIFIER)){
+            id = tokens.get(0).getLiteral();
+            tokens.advance();
+            if(match("=")){
+                newGlobal = new Ast.Global(id, false, Optional.of(parseExpression()));
+                return newGlobal;
+            }
+            else{
+                handleError("Expected '=' symbol", false);
+            }
+        } else {
+            handleError("Expected 'IDENTIFIER' type token ", false);
+        }
+        return newGlobal;
     }
 
     /**
@@ -137,7 +202,61 @@ public final class Parser {
      * next tokens start a method, aka {@code FUN}.
      */
     public Ast.Function parseFunction() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        String id;
+        Ast.Function newFunction = null;
+        List<String> parameters = new ArrayList<>();
+        if(tokens.has(0) && match("FUN")){
+            System.out.println("I ENTERED");
+            if(peek(Token.Type.IDENTIFIER)){
+                id = tokens.get(0).getLiteral();
+                tokens.advance();
+                if(tokens.has(0) && peek(Token.Type.OPERATOR) && peek("(")) {
+                    match("(");
+                    //Empty parameter list
+                    if (peek(Token.Type.OPERATOR) && peek(")")) {
+                        match(")");
+                        if(match("DO")){
+                            List<Ast.Statement> block = parseBlock();
+                            if(match("END")){
+                                newFunction = new Ast.Function(id, parameters,block);
+                            }
+                        }
+                    } else { //Check for Identifier if not an empty parameter list
+                        if(peek(Token.Type.IDENTIFIER)){
+                            parameters.add(tokens.get(0).getLiteral());
+                        }
+                        //While we find comma indicating more parameters
+                        while (peek(Token.Type.OPERATOR) && match(",")) {
+                            if(peek(Token.Type.IDENTIFIER)){
+                                parameters.add(tokens.get(0).getLiteral());
+                            }
+                            else{
+                                handleError("Expected Token Type 'IDENTIFIER'", false);
+                            }
+                            //Add parameters to list
+                        }
+                        if (!match(")")) { //No matching right parentheses
+                            handleError("Expected ')' operator", false);
+                        } else { //Otherwise return the function and the parameters added
+                            if(match("DO")){
+                                List<Ast.Statement> block = parseBlock();
+                                if(match("END")){
+                                    newFunction = new Ast.Function(id, parameters, block);
+                                }
+                                else{
+                                    handleError("Expected 'END' keyword", false);
+                                }
+                            }
+                            else{
+                                handleError("Expected 'DO' keyword", false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return newFunction;
     }
 
     /**
