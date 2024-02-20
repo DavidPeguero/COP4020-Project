@@ -177,7 +177,7 @@ final class ParserTests {
                                 new Token(Token.Type.IDENTIFIER, "END", 17)
                         ),
                         new Ast.Statement.If(
-                                new Ast.Expression.Access(Optional.empty(), "expr"),
+                new Ast.Expression.Access(Optional.empty(), "expr"),
                                 Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))),
                                 Arrays.asList()
                         )

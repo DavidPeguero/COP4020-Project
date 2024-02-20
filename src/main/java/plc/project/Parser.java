@@ -145,7 +145,27 @@ public final class Parser {
      * preceding token indicates the opening a block of statements.
      */
     public List<Ast.Statement> parseBlock() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Statement> statements = new ArrayList<>();
+
+        while (tokens.has(0)){
+            boolean shouldBreak = false;
+            switch (tokens.get(0).getLiteral()){
+                case "ELSE":
+                case "CASE":
+                case "DEFAULT":
+                case ":":
+                case "END":
+                    shouldBreak = true;
+                default:
+            }
+
+            if (shouldBreak) {break;}
+
+            Ast.Statement statement = parseStatement();
+            statements.add(statement);
+        }
+
+        return statements;
     }
 
     /**
@@ -170,40 +190,22 @@ public final class Parser {
         } else {
             Ast.Expression expr = parseExpression();
             statement =  new Ast.Statement.Expression(expr);
+
+            if (match("=")){
+                Ast.Expression rightExpr = parseExpression();
+
+                if (rightExpr instanceof Ast.Expression.Literal) {
+                    statement = new Ast.Statement.Assignment(expr, new Ast.Expression.Access(Optional.empty(), ((Ast.Expression.Literal) rightExpr).getLiteral().toString()));
+                }
+                else {
+                    statement = new Ast.Statement.Assignment(expr, rightExpr);
+                }
+
+            }
+
+            if (!match(";"))
+                handleError("Expected semicolon", false);
         }
-
-        if (!match(";"))
-            handleError("Expected semicolon", false);
-
-
-//        // Technically the last check needed in parsing statements
-//        if (tokens.has(0)){
-//
-//            // expression (= expression)? ;
-//            // ex1 = () || ()
-//            String receiver = tokens.get(0).getLiteral();
-//            Ast.Expression expr = parseExpression();
-//
-//            // Ast.Statement statement;
-//            if (match("=")) { // Go into an assignment expression
-//                String value = tokens.get(0).getLiteral();
-//                statement = new Ast.Statement.Assignment(
-//                        new Ast.Expression.Access(Optional.empty(), receiver),
-//                        new Ast.Expression.Access(Optional.empty(), value));
-//
-//                parseExpression();
-//
-//                if (!match(";"))
-//                    handleError("Missing Semicolon", false);
-//                else
-//                    return statement;
-//            }
-//
-//            if (match(";")) { // Only the single expression
-//                return new Ast.Statement.Expression(expr);
-//            } else
-//                handleError("Missing Semicolon", false);
-//        }
 
         return statement;
     }
@@ -215,22 +217,23 @@ public final class Parser {
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
         // 'Let' identifier (= expression)? ;
-
-        //throw new UnsupportedOperationException();
         match("LET");
         if (!match(Token.Type.IDENTIFIER))
             handleError("Expected identifier in declaration", false);
 
+        // Get identifier literal string name
         String name = tokens.get(-1).getLiteral();
 
         // Optional type that contains an Ast.Expression
         Optional<Ast.Expression> value = Optional.empty();
 
+        // Creates an Optional<Ast.Expression> object
         if (match("=")){
-            // Creates an Optional<Ast.Expression> object
             value = Optional.of(parseExpression());
         }
 
+        if (!match(";"))
+            handleError("Expected ';' in declaration", false);
         return new Ast.Statement.Declaration(name, value);
     }
 
@@ -240,7 +243,26 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Statement.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // 'IF' expression 'DO' block ('ELSE' block)? 'END'
+        // If(Ast.Expression condition, List<Statement> thenStatements, List<Statement> elseStatements)
+
+        match("IF");
+        Ast.Expression condition = parseExpression();
+
+        if(!match("DO"))
+            handleError("Expected 'DO' keyword", false);
+
+        List<Ast.Statement> thenStatements = parseBlock();
+        List<Ast.Statement> elseStatements = new ArrayList<>();
+
+        if (match("ELSE")){
+            elseStatements = parseBlock();
+        }
+
+        if (!match("END"))
+            handleError("Expected END keyword", false);
+
+        return new Ast.Statement.If(condition, thenStatements, elseStatements);
     }
 
     /**
@@ -248,8 +270,31 @@ public final class Parser {
      * should only be called if the next tokens start a switch statement, aka
      * {@code SWITCH}.
      */
+
+    // TODO: Develop unit tests for this
     public Ast.Statement.Switch parseSwitchStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // 'SWITCH' expression ('CASE' expression ':' block)* 'DEFAULT' block 'END'
+
+        Ast.Expression condition;
+        List<Ast.Statement.Case> cases = new ArrayList<>();
+
+        // case can have optional value and a required list of statements
+        match("SWITCH");
+        condition = parseExpression();
+
+        while (match("CASE")){
+            cases.add(parseCaseStatement());
+        }
+
+        if (!match("DEFAULT"))
+            handleError("Expected 'DEFAULT' case", false);
+
+        cases.add(new Ast.Statement.Case(Optional.empty(), parseBlock()));
+
+        if (!match("END"))
+            handleError("Expected 'END' keyword in switch statement", false);
+
+        return new Ast.Statement.Switch(condition, cases);
     }
 
     /**
@@ -258,7 +303,13 @@ public final class Parser {
      * default block of a switch statement, aka {@code CASE} or {@code DEFAULT}.
      */
     public Ast.Statement.Case parseCaseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Optional<Ast.Expression> value = Optional.of(parseExpression());
+
+        if (!match(":"))
+            handleError("Expected ':' for case condition", false);
+
+        List<Ast.Statement> statements = parseBlock();
+        return new Ast.Statement.Case(value, statements);
     }
 
     /**
@@ -267,7 +318,20 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Statement.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // 'WHILE' expression 'DO' block 'END'
+
+        match("WHILE");
+        Ast.Expression condition = parseExpression();
+
+        if (!match("DO"))
+            handleError("Expected 'DO' in while statement", false);
+
+        List<Ast.Statement> statements = parseBlock();
+
+        if (!match("END"))
+            handleError("Expected 'END' in while loop", false);
+
+        return new Ast.Statement.While(condition, statements);
     }
 
     /**
@@ -276,7 +340,15 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Statement.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // 'RETURN' expression ';'
+        match("RETURN");
+
+        Ast.Expression value = parseExpression();
+
+        if (!match(";"))
+            handleError("Expected ';' at end of return statement", false);
+
+        return new Ast.Statement.Return(value);
     }
 
     /**
@@ -406,7 +478,7 @@ public final class Parser {
                 match(Token.Type.DECIMAL);
                 return decimal;
             } else if (peek(Token.Type.INTEGER)) {
-                Ast.Expression.Literal integer = new Ast.Expression.Literal(new BigInteger(tokens.get(0).getLiteral()));
+                Ast.Expression integer = new Ast.Expression.Literal(new BigInteger(tokens.get(0).getLiteral()));
                 match(Token.Type.INTEGER);
                 return integer;
             } else if (peek(Token.Type.STRING)) {
