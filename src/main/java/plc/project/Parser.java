@@ -1,6 +1,7 @@
 package plc.project;
 
 import javax.management.BadAttributeValueExpException;
+import java.io.Console;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -125,6 +126,7 @@ public final class Parser {
         }
 
         if(!match(";")){
+            System.out.println(tokens.get(0).getLiteral());
             handleError("Missing Semicolon", false);
         }
 
@@ -139,16 +141,20 @@ public final class Parser {
     public Ast.Global parseList() throws ParseException {
         String id = tokens.get(0).getLiteral();
         Ast.Global newGlobal = null;
+        List<Ast.Expression> expressions = new ArrayList<>();
         tokens.advance();
         if(match("=", "[")){
             //Parse Exception
-            parseExpression();
+            expressions.add(parseExpression());
             while(match(',')){
-                handleError("Dunno", false);
+                expressions.add(parseExpression());
             }
-
+            if(match("]")){
+                Ast.Expression list = new Ast.Expression.PlcList(expressions);
+                newGlobal = new Ast.Global(id, true, Optional.of(list));
+            }
         }
-        return null;
+        return newGlobal;
     }
 
     /**
@@ -160,6 +166,7 @@ public final class Parser {
         Ast.Global newGlobal = null;
         if(peek(Token.Type.IDENTIFIER)){
             id = tokens.get(0).getLiteral();
+            tokens.advance();
             if(match("=")){
                 newGlobal = new Ast.Global(id, true, Optional.of(parseExpression()));
                 return newGlobal;
