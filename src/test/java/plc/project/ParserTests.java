@@ -29,43 +29,43 @@ final class ParserTests {
 
     private static Stream<Arguments> testSource() {
         return Stream.of(
-//                Arguments.of("Zero Statements",
-//                        Arrays.asList(),
-//                        new Ast.Source(Arrays.asList(), Arrays.asList())
-//                ),
-//                Arguments.of("Global - Immutable",
-//                        Arrays.asList(
-//                                //VAL name = expr;
-//                                new Token(Token.Type.IDENTIFIER, "VAL", 0),
-//                                new Token(Token.Type.IDENTIFIER, "name", 4),
-//                                new Token(Token.Type.OPERATOR, "=", 9),
-//                                new Token(Token.Type.IDENTIFIER, "expr", 11),
-//                                new Token(Token.Type.OPERATOR, ";", 15)
-//                        ),
-//                        new Ast.Source(
-//                                Arrays.asList(new Ast.Global("name", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
-//                                Arrays.asList()
-//                        )
-//                ),
-//                Arguments.of("Function",
-//                        Arrays.asList(
-//                                //FUN name() DO stmt; END
-//                                new Token(Token.Type.IDENTIFIER, "FUN", 0),
-//                                new Token(Token.Type.IDENTIFIER, "name", 4),
-//                                new Token(Token.Type.OPERATOR, "(", 8),
-//                                new Token(Token.Type.OPERATOR, ")", 9),
-//                                new Token(Token.Type.IDENTIFIER, "DO", 11),
-//                                new Token(Token.Type.IDENTIFIER, "stmt", 14),
-//                                new Token(Token.Type.OPERATOR, ";", 18),
-//                                new Token(Token.Type.IDENTIFIER, "END", 20)
-//                        ),
-//                        new Ast.Source(
-//                                Arrays.asList(),
-//                                Arrays.asList(new Ast.Function("name", Arrays.asList(), Arrays.asList(
-//                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
-//                                )))
-//                        )
-//                ),
+                Arguments.of("Zero Statements",
+                        Arrays.asList(),
+                        new Ast.Source(Arrays.asList(), Arrays.asList())
+                ),
+                Arguments.of("Global - Immutable",
+                        Arrays.asList(
+                                //VAL name = expr;
+                                new Token(Token.Type.IDENTIFIER, "VAL", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "=", 9),
+                                new Token(Token.Type.IDENTIFIER, "expr", 11),
+                                new Token(Token.Type.OPERATOR, ";", 15)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(new Ast.Global("name", false, Optional.of(new Ast.Expression.Access(Optional.empty(), "expr")))),
+                                Arrays.asList()
+                        )
+                ),
+                Arguments.of("Function",
+                        Arrays.asList(
+                                //FUN name() DO stmt; END
+                                new Token(Token.Type.IDENTIFIER, "FUN", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.OPERATOR, ")", 9),
+                                new Token(Token.Type.IDENTIFIER, "DO", 11),
+                                new Token(Token.Type.IDENTIFIER, "stmt", 14),
+                                new Token(Token.Type.OPERATOR, ";", 18),
+                                new Token(Token.Type.IDENTIFIER, "END", 20)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(),
+                                Arrays.asList(new Ast.Function("name", Arrays.asList(), Arrays.asList(
+                                        new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
+                                )))
+                        )
+                ),
                 Arguments.of("List",
                         Arrays.asList(
                                 //LIST name = [first, second];
