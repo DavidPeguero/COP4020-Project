@@ -126,7 +126,6 @@ public final class Parser {
         }
 
         if(!match(";")){
-            System.out.println(tokens.get(0).getLiteral());
             handleError("Missing Semicolon", false);
         }
 
@@ -146,7 +145,7 @@ public final class Parser {
         if(match("=", "[")){
             //Parse Exception
             expressions.add(parseExpression());
-            while(match(',')){
+            while(match(",")){
                 expressions.add(parseExpression());
             }
             if(match("]")){
