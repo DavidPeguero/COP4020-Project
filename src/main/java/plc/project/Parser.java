@@ -108,7 +108,6 @@ public final class Parser {
         }
 
         if(!match(";")){
-            System.out.println(tokens.get(0).getLiteral());
             handleError("Missing Semicolon");
         }
 
@@ -128,7 +127,7 @@ public final class Parser {
         if(match("=", "[")){
             //Parse Exception
             expressions.add(parseExpression());
-            while(match(',')){
+            while(match(",")){
                 expressions.add(parseExpression());
             }
             if(match("]")){
@@ -195,7 +194,6 @@ public final class Parser {
         Ast.Function newFunction = null;
         List<String> parameters = new ArrayList<>();
         if(tokens.has(0) && match("FUN")){
-            System.out.println("I ENTERED");
             if(peek(Token.Type.IDENTIFIER)){
                 id = tokens.get(0).getLiteral();
                 tokens.advance();

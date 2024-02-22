@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,35 @@ final class ParserTests {
                                         new Ast.Statement.Expression(new Ast.Expression.Access(Optional.empty(), "stmt"))
                                 )))
                         )
+                ),
+                Arguments.of("List",
+                        Arrays.asList(
+                                //LIST name = [first, second];
+                                new Token(Token.Type.IDENTIFIER, "LIST", 0),
+                                new Token(Token.Type.IDENTIFIER, "name", 5),
+                                new Token(Token.Type.OPERATOR, "=", 10),
+                                new Token(Token.Type.OPERATOR, "[", 12),
+                                new Token(Token.Type.IDENTIFIER, "first", 13),
+                                new Token(Token.Type.OPERATOR, ",", 18),
+                                new Token(Token.Type.IDENTIFIER, "second", 20),
+                                new Token(Token.Type.OPERATOR, "]", 26),
+                                new Token(Token.Type.OPERATOR, ";", 27)
+                        ),
+                        new Ast.Source(
+                                Arrays.asList(
+                                        new Ast.Global("name", true, Optional.of(
+                                                new Ast.Expression.PlcList(
+                                                        Arrays.asList(
+                                                                new Ast.Expression.Access(Optional.empty(),  "first"),
+                                                                new Ast.Expression.Access(Optional.empty(),  "second")
+                                                        )
+                                                )
+                                        ))
+                                ),
+                                Arrays.asList()
+                        )
+
+
                 )
         );
     }
