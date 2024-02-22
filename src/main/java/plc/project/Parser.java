@@ -13,13 +13,6 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 ParserTests (47/53):
     Statement (7/10):
         Assignment (4/7):
-            Complex Value: Incorrect result,
-                received Ast.Statement.Assignment
-                    {receiver=Ast.Expression.Access
-                        {offset=Optional.empty, name='name'},
-                        value=Ast.Expression.Access
-                            {offset=Optional.empty, name='expr1'}
-                    }
             List 1: Incorrect result,
                 received Ast.Statement.Assignment
                     {receiver=Ast.Expression.Access
@@ -47,11 +40,6 @@ ParserTests (47/53):
                     received Ast.Expression.Literal{literal=\}
                 String Escape "\\": Incorrect result,
                     received Ast.Expression.Literal{literal=\\}
-    Error (check for correct index) (1/2):
-        Invalid Expression:
-            Unexpected java.lang.NullPointerException:
-                Cannot invoke "plc.project.Token.getIndex()" because "this.currentMatchedToken" is null
-
  */
 
 /**
@@ -75,23 +63,17 @@ public final class Parser {
         this.tokens = new TokenStream(tokens);
     }
 
-    // Keep track of the last token that was matched
-    Token currentMatchedToken = null;
-
-    // Keep track of the current running index of matched tokens; index will be the first character of last token
-    // int CURRENT_TOKEN_TOTAL_CHAR_INDEX = 0;
-    public void handleError(String message, boolean isUnexpectedToken) throws ParseException {
+    public void handleError(String message) throws ParseException {
         // Two cases
+        // name(expr -> throw index at 9
+        // name = ; -> throw index at 7
 
-        // Error at an unexpected token [wrong token type at position]
-        // return index of unexpected token in entire stream
-        if (isUnexpectedToken)
-            throw new ParseException(message, currentMatchedToken.getIndex());
-
-
-        // Error at the end of a stream of valid tokens in grammar [Missing the rest]
-        // should return index of character after last valid one
-        throw new ParseException(message, currentMatchedToken.getIndex() + currentMatchedToken.getLiteral().length());
+        // Missing token at end of valid stream of tokens
+        if (!tokens.has(0)) {
+            throw new ParseException(message, tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+        } else {    // Token in the middle of stream of tokens
+            throw new ParseException(message, tokens.get(0).getIndex());
+        }
     }
 
     /**
@@ -122,12 +104,12 @@ public final class Parser {
         } else if (match("VAL")){
             global = parseImmutable();
         } else {
-            handleError("Not a valid global Start", true);
+            handleError("Not a valid global Start");
         }
 
         if(!match(";")){
             System.out.println(tokens.get(0).getLiteral());
-            handleError("Missing Semicolon", false);
+            handleError("Missing Semicolon");
         }
 
         return global;
@@ -176,7 +158,7 @@ public final class Parser {
                 return newGlobal;
             }
         } else {
-            handleError("Expected Identifier", true);
+            handleError("Expected Identifier");
         }
         return newGlobal;
     }
@@ -196,10 +178,10 @@ public final class Parser {
                 return newGlobal;
             }
             else{
-                handleError("Expected '=' symbol", false);
+                handleError("Expected '=' symbol");
             }
         } else {
-            handleError("Expected 'IDENTIFIER' type token ", false);
+            handleError("Expected 'IDENTIFIER' type token ");
         }
         return newGlobal;
     }
@@ -238,12 +220,12 @@ public final class Parser {
                                 parameters.add(tokens.get(0).getLiteral());
                             }
                             else{
-                                handleError("Expected Token Type 'IDENTIFIER'", false);
+                                handleError("Expected Token Type 'IDENTIFIER'");
                             }
                             //Add parameters to list
                         }
                         if (!match(")")) { //No matching right parentheses
-                            handleError("Expected ')' operator", false);
+                            handleError("Expected ')' operator");
                         } else { //Otherwise return the function and the parameters added
                             if(match("DO")){
                                 List<Ast.Statement> block = parseBlock();
@@ -251,11 +233,11 @@ public final class Parser {
                                     newFunction = new Ast.Function(id, parameters, block);
                                 }
                                 else{
-                                    handleError("Expected 'END' keyword", false);
+                                    handleError("Expected 'END' keyword");
                                 }
                             }
                             else{
-                                handleError("Expected 'DO' keyword", false);
+                                handleError("Expected 'DO' keyword");
                             }
                         }
                     }
@@ -330,7 +312,7 @@ public final class Parser {
             }
 
             if (!match(";"))
-                handleError("Expected semicolon", false);
+                handleError("Expected semicolon");
         }
 
         return statement;
@@ -345,7 +327,7 @@ public final class Parser {
         // 'Let' identifier (= expression)? ;
         match("LET");
         if (!match(Token.Type.IDENTIFIER))
-            handleError("Expected identifier in declaration", false);
+            handleError("Expected identifier in declaration");
 
         // Get identifier literal string name
         String name = tokens.get(-1).getLiteral();
@@ -359,7 +341,7 @@ public final class Parser {
         }
 
         if (!match(";"))
-            handleError("Expected ';' in declaration", false);
+            handleError("Expected ';' in declaration");
         return new Ast.Statement.Declaration(name, value);
     }
 
@@ -376,7 +358,7 @@ public final class Parser {
         Ast.Expression condition = parseExpression();
 
         if(!match("DO"))
-            handleError("Expected 'DO' keyword", false);
+            handleError("Expected 'DO' keyword");
 
         List<Ast.Statement> thenStatements = parseBlock();
         List<Ast.Statement> elseStatements = new ArrayList<>();
@@ -386,7 +368,7 @@ public final class Parser {
         }
 
         if (!match("END"))
-            handleError("Expected END keyword", false);
+            handleError("Expected END keyword");
 
         return new Ast.Statement.If(condition, thenStatements, elseStatements);
     }
@@ -413,12 +395,12 @@ public final class Parser {
         }
 
         if (!match("DEFAULT"))
-            handleError("Expected 'DEFAULT' case", false);
+            handleError("Expected 'DEFAULT' case");
 
         cases.add(new Ast.Statement.Case(Optional.empty(), parseBlock()));
 
         if (!match("END"))
-            handleError("Expected 'END' keyword in switch statement", false);
+            handleError("Expected 'END' keyword in switch statement");
 
         return new Ast.Statement.Switch(condition, cases);
     }
@@ -432,7 +414,7 @@ public final class Parser {
         Optional<Ast.Expression> value = Optional.of(parseExpression());
 
         if (!match(":"))
-            handleError("Expected ':' for case condition", false);
+            handleError("Expected ':' for case condition");
 
         List<Ast.Statement> statements = parseBlock();
         return new Ast.Statement.Case(value, statements);
@@ -450,12 +432,12 @@ public final class Parser {
         Ast.Expression condition = parseExpression();
 
         if (!match("DO"))
-            handleError("Expected 'DO' in while statement", false);
+            handleError("Expected 'DO' in while statement");
 
         List<Ast.Statement> statements = parseBlock();
 
         if (!match("END"))
-            handleError("Expected 'END' in while loop", false);
+            handleError("Expected 'END' in while loop");
 
         return new Ast.Statement.While(condition, statements);
     }
@@ -472,7 +454,7 @@ public final class Parser {
         Ast.Expression value = parseExpression();
 
         if (!match(";"))
-            handleError("Expected ';' at end of return statement", false);
+            handleError("Expected ';' at end of return statement");
 
         return new Ast.Statement.Return(value);
     }
@@ -656,7 +638,7 @@ public final class Parser {
                                 //Add parameters to list
                             }
                             if(!match(")")){ //No matching right parentheses
-                                handleError("No right parentheses found", false);
+                                handleError("No right parentheses found");
                             } else{ //Otherwise return the function and the parameters added
                                 return new Ast.Expression.Function(identifierLiteral, parameters);
                             }
@@ -666,25 +648,24 @@ public final class Parser {
                         if(match("]"))
                             return new Ast.Expression.Access(Optional.of(tempExp), identifierLiteral);
                         else
-                            handleError("No matching right bracket", false);
+                            handleError("No matching right bracket");
                     } else{
                         return new Ast.Expression.Access(Optional.empty(), identifierLiteral);
                     }
                 }
             } else if (match("(")) { // '(' expression ')'
                 if (!tokens.has(0))
-                    handleError("Expecting Expression after Opening Parenthesis", false);
-                // Getting accurate token index according to ParseException Specs
+                    handleError("Expecting Expression after Opening Parenthesis");
                 Ast.Expression expr = parseExpression();
                 if (!match(")"))
-                    handleError("Expected a Closing Parenthesis", false);
+                    handleError("Expected a Closing Parenthesis");
 
                 return new Ast.Expression.Group(expr);
             }
         }
 
-        // Can't use handleError here
-        throw new ParseException("Expected Primary Expression", currentMatchedToken.getIndex());
+        handleError("Expected Primary Expression");
+        return null;
     }
 
     /**
@@ -726,10 +707,6 @@ public final class Parser {
 
         if (peek) {
             for (int i = 0; i < patterns.length; i++){
-                // NEW
-                currentMatchedToken = tokens.get(0);
-                // NEW
-
                 tokens.advance();
             }
         }

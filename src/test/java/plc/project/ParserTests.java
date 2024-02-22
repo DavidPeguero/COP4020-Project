@@ -18,6 +18,7 @@ import java.util.stream.Stream;
  * Standard JUnit5 parameterized tests. See the RegexTests file from Homework 1
  * or the LexerTests file from the last project part for more information.
  */
+
 final class ParserTests {
 
     @ParameterizedTest
