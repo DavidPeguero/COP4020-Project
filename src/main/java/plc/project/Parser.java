@@ -88,6 +88,9 @@ public final class Parser {
         while(tokens.has(0) && peek("FUN")){
             functions.add(parseFunction());
         }
+        if(tokens.has(0) && (peek("LIST") || peek("VAR") || peek("VAL"))){
+            handleError("Found a global where a function was expected");
+        }
         return new Ast.Source(globals, functions);
     }
 
