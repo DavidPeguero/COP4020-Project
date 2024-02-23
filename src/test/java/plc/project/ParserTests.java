@@ -244,6 +244,22 @@ final class ParserTests {
                                 (new Ast.Expression.Access(
                                         Optional.of(new Ast.Expression.Access(Optional.empty(), "offset")),"list"),
                                         new Ast.Expression.Access(Optional.empty(), "expr"))
+                ),
+                Arguments.of("Assignment Expression",
+                        Arrays.asList(
+                                // name = expr1 + expr2;
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "=", 5),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 7),
+                                new Token(Token.Type.OPERATOR, "+", 13),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 15),
+                                new Token(Token.Type.OPERATOR, ";", 20)
+                        ),
+                        new Ast.Statement.Assignment(
+                                new Ast.Expression.Access(Optional.empty(), "name"),
+                                new Ast.Expression.Binary("+", new Ast.Expression.Access(
+                                        Optional.empty(), "expr1"), new Ast.Expression.Access(Optional.empty(), "expr2"))
+                        )
                 )
         );
     }
