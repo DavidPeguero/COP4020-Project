@@ -93,7 +93,6 @@ final class ParserTests {
                                 ),
                                 Arrays.asList()
                         )
-<<<<<<< HEAD
                 ),
                 Arguments.of("Function",
                         Arrays.asList(
@@ -140,10 +139,6 @@ final class ParserTests {
                                 ),
                                 Arrays.asList()
                         )
-=======
->>>>>>> 553a25b (Added test for LIST global, and fixed parseList())
-
-
                 )
         );
     }

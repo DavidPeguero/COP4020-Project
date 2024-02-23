@@ -597,6 +597,9 @@ public final class Parser {
                 formattedString = formattedString.replace("\\n", "\n");
                 formattedString = formattedString.replace("\\r", "\r");
                 formattedString = formattedString.replace("\\t", "\t");
+                formattedString = formattedString.replace("\\'", "'");
+                formattedString = formattedString.replace("\\\"", "\"");
+                formattedString = formattedString.replace("\\\\", "\\");
                 Ast.Expression.Literal string = new Ast.Expression.Literal(formattedString);
                 match(Token.Type.STRING);
                 return string;
@@ -607,6 +610,9 @@ public final class Parser {
                 formattedChar = formattedChar.replace("\\n", "\n");
                 formattedChar = formattedChar.replace("\\r", "\r");
                 formattedChar = formattedChar.replace("\\t", "\t");
+                formattedChar = formattedChar.replace("\\'", "'");
+                formattedChar = formattedChar.replace("\\\"", "\"");
+                formattedChar = formattedChar.replace("\\\\", "\\");
                 Ast.Expression.Literal character = new Ast.Expression.Literal(formattedChar.charAt(0));
                 match(Token.Type.CHARACTER);
                 return character;
