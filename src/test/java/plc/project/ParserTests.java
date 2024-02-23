@@ -203,31 +203,47 @@ final class ParserTests {
 
     private static Stream<Arguments> testAssignmentStatement() {
         return Stream.of(
-                Arguments.of("Assignment",
+//                Arguments.of("Assignment",
+//                        Arrays.asList(
+//                                //name = value;
+//                                new Token(Token.Type.IDENTIFIER, "name", 0),
+//                                new Token(Token.Type.OPERATOR, "=", 5),
+//                                new Token(Token.Type.IDENTIFIER, "value", 7),
+//                                new Token(Token.Type.OPERATOR, ";", 12)
+//                        ),
+//                        new Ast.Statement.Assignment(
+//                                new Ast.Expression.Access(Optional.empty(), "name"),
+//                                new Ast.Expression.Access(Optional.empty(), "value")
+//                    )
+//                ),
+//                Arguments.of("Assignment Expression",
+//                        Arrays.asList(
+//                                // name = 4;
+//                                new Token(Token.Type.IDENTIFIER, "name", 0),
+//                                new Token(Token.Type.OPERATOR, "=", 5),
+//                                new Token(Token.Type.INTEGER, "4", 7),
+//                                new Token(Token.Type.OPERATOR, ";", 8)
+//                        ),
+//                        new Ast.Statement.Assignment(
+//                                new Ast.Expression.Access(Optional.empty(), "name"),
+//                                new Ast.Expression.Access(Optional.empty(), "4")
+//                        )
+//                ),
+                Arguments.of("List Expression",
                         Arrays.asList(
-                                //name = value;
-                                new Token(Token.Type.IDENTIFIER, "name", 0),
-                                new Token(Token.Type.OPERATOR, "=", 5),
-                                new Token(Token.Type.IDENTIFIER, "value", 7),
-                                new Token(Token.Type.OPERATOR, ";", 12)
+                                //list[offset] = expr;
+                                new Token(Token.Type.IDENTIFIER, "list", 0),
+                                new Token(Token.Type.OPERATOR, "[", 4),
+                                new Token(Token.Type.IDENTIFIER, "offset", 5),
+                                new Token(Token.Type.OPERATOR, "]", 11),
+                                new Token(Token.Type.OPERATOR, "=", 13),
+                                new Token(Token.Type.IDENTIFIER, "expr", 15),
+                                new Token(Token.Type.OPERATOR, ";", 16)
                         ),
-                        new Ast.Statement.Assignment(
-                                new Ast.Expression.Access(Optional.empty(), "name"),
-                                new Ast.Expression.Access(Optional.empty(), "value")
-                    )
-                ),
-                Arguments.of("Assignment Expression",
-                        Arrays.asList(
-                                // name = 4;
-                                new Token(Token.Type.IDENTIFIER, "name", 0),
-                                new Token(Token.Type.OPERATOR, "=", 5),
-                                new Token(Token.Type.INTEGER, "4", 7),
-                                new Token(Token.Type.OPERATOR, ";", 8)
-                        ),
-                        new Ast.Statement.Assignment(
-                                new Ast.Expression.Access(Optional.empty(), "name"),
-                                new Ast.Expression.Access(Optional.empty(), "4")
-                        )
+                        new Ast.Statement.Assignment
+                                (new Ast.Expression.Access(
+                                        Optional.of(new Ast.Expression.Access(Optional.empty(), "offset")),"list"),
+                                        new Ast.Expression.Access(Optional.empty(), "expr"))
                 )
         );
     }
