@@ -431,7 +431,7 @@ public final class Parser {
      * should only be called if the next tokens start a while statement, aka
      * {@code WHILE}.
      */
-    public Ast.Statement.While parseWhileStatement() throws ParseException {
+    public Ast.Statement.While  parseWhileStatement() throws ParseException {
         // 'WHILE' expression 'DO' block 'END'
 
         match("WHILE");
