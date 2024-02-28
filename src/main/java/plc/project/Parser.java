@@ -204,11 +204,16 @@ public final class Parser {
                     match("(");
                     //Empty parameter list
                     if (peek(Token.Type.OPERATOR) && peek(")")) {
-                        match(")");
+                        if(!match(")")){
+                            handleError("Expect ')' operator");
+                        }
                         if(match("DO")){
                             List<Ast.Statement> block = parseBlock();
                             if(match("END")){
                                 newFunction = new Ast.Function(id, parameters,block);
+                            }
+                            else{
+                                handleError("Expect 'END' keyword");
                             }
                         }
                     } else { //Check for Identifier if not an empty parameter list
