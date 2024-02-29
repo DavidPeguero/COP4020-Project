@@ -50,7 +50,33 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        // Assignments to immutable should result in failure
+        // Check that receiver is of Ast.Expression.Access else fail
+        // Assign to current scope
+        // Return NIL
+
+        if (!(ast.getReceiver() instanceof Ast.Expression.Access))
+            throw new RuntimeException("Expected Access Type");
+        if (!scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).getMutable())
+            throw new RuntimeException("Modification of Immutable Type");
+
+        if (((Ast.Expression.Access) ast.getReceiver()).getOffset().isPresent()){
+            Environment.PlcObject receiver = visit(((Ast.Expression.Access) ast.getReceiver()).getOffset().get());
+            if(!(receiver.getValue() instanceof BigInteger offset))
+                throw new RuntimeException("Expected BigInteger type for offset");
+
+            Environment.Variable variable = scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName());
+            if(!(variable.getValue().getValue() instanceof List))
+                throw new RuntimeException("Expected list");
+
+            // Warning here says unchecked cast, just ignore it :skull_emoji:
+            List<Object> list = (List<Object>) variable.getValue().getValue();
+            list.set(offset.intValue(), visit(ast.getValue()).getValue());
+        } else{
+            scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).setValue(visit(ast.getValue()));
+        }
+
+        return Environment.NIL;
     }
 
     @Override
@@ -109,7 +135,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         Environment.Variable variable = scope.lookupVariable(ast.getName());
 
         // The found variable does not contain a list when we have an offset value
-        if (!(variable.getValue().getValue() instanceof List<?>))
+        if (!(variable.getValue().getValue() instanceof List))
             throw new RuntimeException("Does not contain a list");
 
         List<Ast.Expression> list = (List<Ast.Expression>) variable.getValue().getValue();
