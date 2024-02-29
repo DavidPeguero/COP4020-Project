@@ -97,7 +97,29 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
-        return scope.lookupVariable(ast.getName()).getValue();
+        // Case of direct access to variable
+        if (ast.getOffset().isEmpty())
+            return scope.lookupVariable(ast.getName()).getValue();
+
+        // Offset is of incorrect type
+        if (!(visit(ast.getOffset().get()).getValue() instanceof BigInteger offset))
+            throw new RuntimeException("Expected BigDecimal type for offset access");
+
+        // Search for list variable in scope or parent scopes
+        Environment.Variable variable = scope.lookupVariable(ast.getName());
+
+        // The found variable does not contain a list when we have an offset value
+        if (!(variable.getValue().getValue() instanceof List<?>))
+            throw new RuntimeException("Does not contain a list");
+
+        List<Ast.Expression> list = (List<Ast.Expression>) variable.getValue().getValue();
+
+        // Offset value is out of bounds
+        if (offset.intValue() < 0 || offset.intValue() >= list.size())
+            throw new RuntimeException("Offset is out of list bounds");
+
+        // return environment object with literal value in offset
+        return Environment.create(list.get(offset.intValue()));
     }
 
     @Override
@@ -107,7 +129,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.PlcList ast) {
-        throw new UnsupportedOperationException(); //TODO
+
+        return Environment.create(ast.getValues());
+        // throw new UnsupportedOperationException(); //TODO
     }
 
     /**

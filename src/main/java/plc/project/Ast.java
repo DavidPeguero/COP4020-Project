@@ -603,8 +603,21 @@ public abstract class Ast {
 
     }
 
+    /*
+     * preorder will be the order of making visit calls
+     * Must be done in preorder to know if inner binary
+     * conditions allow for structure to continue with it's operation
+     *
+     * postorder traversal is made to help us evaluate the tree
+     * done as we get back out of the recursive calls
+     * produce result and return
+     *
+     * The tree we will be working with is not binary but n-ary
+     * Visit pattern allows us to navigate the tree with differing n-ary
+     */
     public interface Visitor<T> {
 
+        // accept checks in the visitor pattern
         default T visit(Ast ast) {
             if (ast instanceof Ast.Source) {
                 return visit((Ast.Source) ast);

@@ -437,6 +437,16 @@ final class InterpreterTests {
         test(ast, expected, new Scope(null));
     }
 
+    /*
+     * Build interpreters based on scope
+     * interpreter.visit(ast).getValue() returns the result of the Ast
+     * 1 + 2 would return 3 from getValue()
+     * IF returns nil because it does not have a value necessarily
+     *
+     * interpreter.getScope() gives the scope that was given
+     * new scopes may have been made within the current scope
+     * we want to make sure we get back to the current scope correctly
+     */
     private static Scope test(Ast ast, Object expected, Scope scope) {
         Interpreter interpreter = new Interpreter(scope);
         if (expected != null) {
