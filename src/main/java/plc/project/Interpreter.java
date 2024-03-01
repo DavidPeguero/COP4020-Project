@@ -50,11 +50,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        // Assignments to immutable should result in failure
-        // Check that receiver is of Ast.Expression.Access else fail
-        // Assign to current scope
-        // Return NIL
-
         if (!(ast.getReceiver() instanceof Ast.Expression.Access))
             throw new RuntimeException("Expected Access Type");
         if (!scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).getMutable())
@@ -66,12 +61,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 throw new RuntimeException("Expected BigInteger type for offset");
 
             Environment.Variable variable = scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName());
-            if(!(variable.getValue().getValue() instanceof List))
-                throw new RuntimeException("Expected list");
-
             // Warning here says unchecked cast, just ignore it :skull_emoji:
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) variable.getValue().getValue();
+            List<Object> list = requireType(List.class, variable.getValue());
             list.set(offset.intValue(), visit(ast.getValue()).getValue());
         } else{
             scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).setValue(visit(ast.getValue()));
@@ -145,6 +137,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }
 
         return Environment.NIL;
+        /* TODO:
+         *
+         * Use requireType and Environment.create as needed
+         * Check description for project specs
+         */
+        // throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
