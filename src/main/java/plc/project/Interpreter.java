@@ -143,6 +143,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "^":
                 break;
         }
+
+        return Environment.NIL;
     }
 
     @Override
