@@ -111,6 +111,13 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
+        /* TODO:
+         *
+         * Use requireType and Environment.create as needed
+         * Check description for project specs
+         */
+        Object LHS;
+        Object RHS;
         switch(ast.getOperator()){
             case "&&":
                 break;
@@ -125,7 +132,21 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "!=":
                 break;
             case "+":
-                break;
+                // If either is a string; concatenate
+                // if LHS is number/decimal then RHS must match
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+                if (LHS instanceof String || RHS instanceof String){
+                    return Environment.create(LHS.toString() + RHS.toString());
+                }
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS).add((BigDecimal) RHS));
+                }
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS).add((BigInteger) RHS));
+                }
+
+                throw new RuntimeException("LHS and RHS must match type or one can be a string");
             case "-":
                 break;
             case "*":
@@ -137,12 +158,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         }
 
         return Environment.NIL;
-        /* TODO:
-         *
-         * Use requireType and Environment.create as needed
-         * Check description for project specs
-         */
-        // throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
