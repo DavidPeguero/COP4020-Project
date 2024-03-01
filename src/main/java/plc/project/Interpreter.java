@@ -119,12 +119,51 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
+        Environment.PlcObject plcLHS;
+        Environment.PlcObject plcRHS;
+        Boolean leftHand;
+        Boolean rightHand;
         switch(ast.getOperator()){
             case "&&":
+                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
+                if(visit(ast.getRight()).toString().equals("undefined")){
+                    return Environment.create(leftHand);
+                }
+
+                rightHand = requireType(Boolean.class, visit(ast.getRight()));
+                if(visit(ast.getRight()).getValue() instanceof Boolean){
+                    return Environment.create(leftHand && rightHand);
+                }
                 break;
             case "||":
+                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
+                if(visit(ast.getRight()).getValue().equals("undefined")){
+                    return Environment.create(leftHand);
+                }
+
+                rightHand = requireType(Boolean.class, visit(ast.getRight()));
+                if(visit(ast.getRight()).getValue() instanceof Boolean){
+                    return Environment.create(leftHand || rightHand);
+                }
                 break;
             case "<":
+                plcLHS = visit(ast.getLeft());
+                plcRHS = visit(ast.getRight());
+
+                if(plcRHS.getValue() instanceof Comparable && plcLHS.getValue() instanceof Comparable){
+                    if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())){
+                        if(plcLHS.getValue() instanceof BigInteger){
+                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(true);
+                                case 0:
+                                case 1:
+                                    return Environment.create(false);
+                            }
+                        }
+                    }
+                }
                 break;
             case ">":
                 break;
