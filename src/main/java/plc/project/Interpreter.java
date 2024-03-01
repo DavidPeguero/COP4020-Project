@@ -134,6 +134,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "+":
                 // If either is a string; concatenate
                 // if LHS is number/decimal then RHS must match
+                // TODO: Add additional checks for nil
                 LHS = visit(ast.getLeft()).getValue();
                 RHS = visit(ast.getRight()).getValue();
                 if (LHS instanceof String || RHS instanceof String){
