@@ -70,6 +70,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 throw new RuntimeException("Expected list");
 
             // Warning here says unchecked cast, just ignore it :skull_emoji:
+            @SuppressWarnings("unchecked")
             List<Object> list = (List<Object>) variable.getValue().getValue();
             list.set(offset.intValue(), visit(ast.getValue()).getValue());
         } else{
@@ -118,7 +119,30 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        switch(ast.getOperator()){
+            case "&&":
+                break;
+            case "||":
+                break;
+            case "<":
+                break;
+            case ">":
+                break;
+            case "==":
+                break;
+            case "!=":
+                break;
+            case "+":
+                break;
+            case "-":
+                break;
+            case "*":
+                break;
+            case "/":
+                break;
+            case "^":
+                break;
+        }
     }
 
     @Override
@@ -134,11 +158,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         // Search for list variable in scope or parent scopes
         Environment.Variable variable = scope.lookupVariable(ast.getName());
 
-        // The found variable does not contain a list when we have an offset value
-        if (!(variable.getValue().getValue() instanceof List))
-            throw new RuntimeException("Does not contain a list");
-
-        List<Ast.Expression> list = (List<Ast.Expression>) variable.getValue().getValue();
+        @SuppressWarnings("unchecked")
+        List<Ast.Expression> list = requireType(List.class, variable.getValue());
 
         // Offset value is out of bounds
         if (offset.intValue() < 0 || offset.intValue() >= list.size())
