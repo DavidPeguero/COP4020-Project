@@ -50,11 +50,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Assignment ast) {
-        // Assignments to immutable should result in failure
-        // Check that receiver is of Ast.Expression.Access else fail
-        // Assign to current scope
-        // Return NIL
-
         if (!(ast.getReceiver() instanceof Ast.Expression.Access))
             throw new RuntimeException("Expected Access Type");
         if (!scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).getMutable())
@@ -66,12 +61,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 throw new RuntimeException("Expected BigInteger type for offset");
 
             Environment.Variable variable = scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName());
-            if(!(variable.getValue().getValue() instanceof List))
-                throw new RuntimeException("Expected list");
-
             // Warning here says unchecked cast, just ignore it :skull_emoji:
             @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) variable.getValue().getValue();
+            List<Object> list = requireType(List.class, variable.getValue());
             list.set(offset.intValue(), visit(ast.getValue()).getValue());
         } else{
             scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName()).setValue(visit(ast.getValue()));
@@ -123,6 +115,13 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         Environment.PlcObject plcRHS;
         Boolean leftHand;
         Boolean rightHand;
+        /* TODO:
+         *
+         * Use requireType and Environment.create as needed
+         * Check description for project specs
+         */
+        Object LHS;
+        Object RHS;
         switch(ast.getOperator()){
             case "&&":
                 leftHand = requireType(Boolean.class, visit(ast.getLeft()));
@@ -172,7 +171,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "!=":
                 break;
             case "+":
-                break;
+                // If either is a string; concatenate
+                // if LHS is number/decimal then RHS must match
+                // TODO: Add additional checks for nil
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+                if (LHS instanceof String || RHS instanceof String){
+                    return Environment.create(LHS.toString() + RHS.toString());
+                }
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS).add((BigDecimal) RHS));
+                }
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS).add((BigInteger) RHS));
+                }
+
+                throw new RuntimeException("LHS and RHS must match type or one can be a string");
             case "-":
                 break;
             case "*":
