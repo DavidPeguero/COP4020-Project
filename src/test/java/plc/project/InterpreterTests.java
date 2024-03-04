@@ -368,6 +368,31 @@ final class InterpreterTests {
                                 new Ast.Expression.Literal(new BigDecimal("3.4"))
                         ),
                         new BigDecimal("0.4")
+                ),
+                // 1.2 / 3.4
+                Arguments.of("Division by Zero",
+                        new Ast.Expression.Binary("/",
+                                new Ast.Expression.Literal(new BigDecimal("1.2")),
+                                new Ast.Expression.Literal(new BigDecimal("0.00"))
+                        ),
+                        null
+                ),
+                // 3 / 5
+                Arguments.of("Division Int",
+                        new Ast.Expression.Binary("/",
+                                new Ast.Expression.Literal(new BigInteger("3")),
+                                new Ast.Expression.Literal(new BigInteger("5"))
+                        ),
+                        new BigInteger("0")
+                ),
+                // 2147483647 int range
+                // 3 * 1000000000
+                Arguments.of("Multiplication Int",
+                        new Ast.Expression.Binary("*",
+                                new Ast.Expression.Literal(new BigInteger("3")),
+                                new Ast.Expression.Literal(new BigInteger("1000000000"))
+                        ),
+                        new BigInteger("3000000000")
                 )
         );
     }

@@ -289,18 +289,26 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     return Environment.create(((BigDecimal) LHS).multiply((BigDecimal) RHS));
                 }
                 if (LHS instanceof BigInteger && RHS instanceof BigInteger){
-                    return Environment.create(new BigInteger(((BigInteger) LHS).multiply((BigInteger) RHS).toString()));
+                    return Environment.create(((BigInteger) LHS).multiply((BigInteger) RHS));
                 }
                 throw new RuntimeException("LHS and RHS must match type");
             case "/":
                 LHS = visit(ast.getLeft()).getValue();
                 RHS = visit(ast.getRight()).getValue();
+
+                if (LHS == null || RHS == null)
+                    throw new RuntimeException("Division with null value");
+
+                if (RHS.toString().equals("0") || RHS.toString().equals("0.0"))
+                    throw new RuntimeException("Divide by Zero");
+
                 if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
                     return Environment.create((((BigDecimal) LHS).divide((BigDecimal) RHS, RoundingMode.HALF_EVEN)));
                 }
                 if (LHS instanceof BigInteger && RHS instanceof BigInteger){
                     return Environment.create(((BigInteger) LHS).divide((BigInteger) RHS));
                 }
+
                 throw new RuntimeException("LHS and RHS must match type");
             case "^":
                 break;
