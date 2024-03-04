@@ -30,7 +30,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Global ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if(ast.getValue().isPresent()){
+            scope.defineVariable(ast.getName(), ast.getMutable(), visit(ast.getValue().get()));
+        } else {
+            scope.defineVariable(ast.getName(), ast.getMutable(), Environment.NIL);
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -45,7 +50,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+        if(ast.getValue().isPresent()){
+            scope.defineVariable(ast.getName(), true, visit(ast.getValue().get()));
+        } else {
+            scope.defineVariable(ast.getName(), true , Environment.NIL);
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -106,7 +116,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return visit(ast.getExpression());
     }
 
     @Override
@@ -125,26 +135,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         switch(ast.getOperator()){
             case "&&":
                 leftHand = requireType(Boolean.class, visit(ast.getLeft()));
-                if(visit(ast.getRight()).toString().equals("undefined")){
-                    return Environment.create(leftHand);
-                }
-
-                rightHand = requireType(Boolean.class, visit(ast.getRight()));
-                if(visit(ast.getRight()).getValue() instanceof Boolean){
+                try{
+                    rightHand = requireType(Boolean.class, visit(ast.getRight()));
                     return Environment.create(leftHand && rightHand);
                 }
-                break;
-            case "||":
-                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
-                if(visit(ast.getRight()).getValue().equals("undefined")){
+                catch (RuntimeException e){
                     return Environment.create(leftHand);
                 }
-
-                rightHand = requireType(Boolean.class, visit(ast.getRight()));
-                if(visit(ast.getRight()).getValue() instanceof Boolean){
+            case "||":
+                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
+                try{
+                    rightHand = requireType(Boolean.class, visit(ast.getRight()));
                     return Environment.create(leftHand || rightHand);
                 }
-                break;
+                catch (RuntimeException e){
+                    return Environment.create(leftHand);
+                }
             case "<":
                 plcLHS = visit(ast.getLeft());
                 plcRHS = visit(ast.getRight());
@@ -155,20 +161,100 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                             int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
                             switch (compareResult){
                                 case -1:
-                                    return Environment.create(true);
+                                    return Environment.create(Boolean.TRUE);
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        }else if(plcLHS.getValue() instanceof BigDecimal){
+                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
                                 case 0:
                                 case 1:
-                                    return Environment.create(false);
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        } else if(plcLHS.getValue() instanceof Boolean){
+                            int compareResult = requireType(Boolean.class, plcLHS).compareTo(requireType(Boolean.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                case 0:
+                                    return Environment.create(Boolean.FALSE);
+                                case 1:
+                                    return Environment.create(Boolean.TRUE);
+                            }
+                        } else if(plcLHS.getValue() instanceof Character){
+                            int compareResult = requireType(Character.class, plcLHS).compareTo(requireType(Character.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
                             }
                         }
                     }
                 }
                 break;
             case ">":
+                plcLHS = visit(ast.getLeft());
+                plcRHS = visit(ast.getRight());
+
+                if(plcRHS.getValue() instanceof Comparable && plcLHS.getValue() instanceof Comparable){
+                    if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())){
+                        if(plcLHS.getValue() instanceof BigInteger){
+                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        }else if(plcLHS.getValue() instanceof BigDecimal){
+                            int compareResult = requireType(BigDecimal.class, plcLHS).compareTo(requireType(BigDecimal.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.FALSE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.TRUE);
+                            }
+                        }else if(plcLHS.getValue() instanceof Boolean){
+                            int compareResult = requireType(Boolean.class, plcLHS).compareTo(requireType(Boolean.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                case 0:
+                                    return Environment.create(Boolean.FALSE);
+                                case 1:
+                                    return Environment.create(Boolean.TRUE);
+                            }
+                        }else if(plcLHS.getValue() instanceof Character){
+                            int compareResult = requireType(Character.class, plcLHS).compareTo(requireType(Character.class, plcRHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        }
+                    }
+                }
                 break;
             case "==":
+                plcLHS = visit(ast.getLeft());
+                plcRHS = visit(ast.getRight());
+                if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())) {
+                    return Environment.create(plcLHS.getValue().equals(plcRHS.getValue()));
+                }
                 break;
             case "!=":
+                plcLHS = visit(ast.getLeft());
+                plcRHS = visit(ast.getRight());
+                if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())) {
+                    return Environment.create(!plcLHS.getValue().equals(plcRHS.getValue()));
+                }
                 break;
             case "+":
                 // If either is a string; concatenate
@@ -231,8 +317,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.PlcList ast) {
-
-        return Environment.create(ast.getValues());
+        //Create an array of generic objects, since we don't know what they will evaluate to
+        List<Object> plcList = new ArrayList<>();
+        List<Ast.Expression> expressions = ast.getValues();
+        //Visit each expression and add it to the plcList
+        expressions.forEach(exp -> plcList.add(visit(exp).getValue()));
+        return Environment.create(plcList);
         // throw new UnsupportedOperationException(); //TODO
     }
 
