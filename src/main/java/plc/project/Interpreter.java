@@ -259,7 +259,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "+":
                 // If either is a string; concatenate
                 // if LHS is number/decimal then RHS must match
-                // TODO: Add additional checks for nil
                 LHS = visit(ast.getLeft()).getValue();
                 RHS = visit(ast.getRight()).getValue();
                 if (LHS instanceof String || RHS instanceof String){
@@ -272,13 +271,37 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     return Environment.create(((BigInteger) LHS).add((BigInteger) RHS));
                 }
 
-                throw new RuntimeException("LHS and RHS must match type or one can be a string");
+                throw new RuntimeException("LHS and RHS must match type or one must be a string");
             case "-":
-                break;
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS).subtract((BigDecimal) RHS));
+                }
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS).subtract((BigInteger) RHS));
+                }
+                throw new RuntimeException("LHS and RHS must match type");
             case "*":
-                break;
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS).multiply((BigDecimal) RHS));
+                }
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                    return Environment.create(new BigInteger(((BigInteger) LHS).multiply((BigInteger) RHS).toString()));
+                }
+                throw new RuntimeException("LHS and RHS must match type");
             case "/":
-                break;
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                    return Environment.create((((BigDecimal) LHS).divide((BigDecimal) RHS, RoundingMode.HALF_EVEN)));
+                }
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS).divide((BigInteger) RHS));
+                }
+                throw new RuntimeException("LHS and RHS must match type");
             case "^":
                 break;
         }
@@ -289,7 +312,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
         // Case of direct access to variable
-        if (ast.getOffset().isEmpty())
+        if (!ast.getOffset().isPresent())
             return scope.lookupVariable(ast.getName()).getValue();
 
         // Offset is of incorrect type
