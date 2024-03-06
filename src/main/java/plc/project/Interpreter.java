@@ -40,6 +40,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            return Environment.NIL;
+        });
         throw new UnsupportedOperationException(); //TODO
     }
 
@@ -84,7 +87,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException(); //TODO
+
+        try {
+            scope = new Scope(scope);
+            if (requireType(Boolean.class, visit(ast.getCondition()))) {
+                ast.getThenStatements().forEach(this::visit);
+            } else {
+                ast.getElseStatements().forEach(this::visit);
+            }
+        } finally {
+            scope = scope.getParent();
+        }
+        return Environment.NIL;
+//        throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
@@ -99,12 +114,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+
+        while(requireType(Boolean.class, visit(ast.getCondition()))){
+            try {
+                scope = new Scope(scope);
+                ast.getStatements().forEach(this::visit);
+            } finally {
+                scope = scope.getParent();
+            }
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return visit(ast.getValue());
+//        throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
@@ -162,6 +187,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
+                                case 0:
                                 case 1:
                                     return Environment.create(Boolean.FALSE);
                             }
