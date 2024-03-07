@@ -181,17 +181,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
-        Environment.PlcObject plcLHS;
-        Environment.PlcObject plcRHS;
+        Environment.PlcObject LHS = visit(ast.getLeft());
+        Environment.PlcObject RHS = visit(ast.getRight());
         Boolean leftHand;
         Boolean rightHand;
-        /* TODO:
-         *
-         * Use requireType and Environment.create as needed
-         * Check description for project specs
-         */
-        Object LHS;
-        Object RHS;
+
         switch(ast.getOperator()){
             case "&&":
                 leftHand = requireType(Boolean.class, visit(ast.getLeft()));
@@ -212,13 +206,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                     return Environment.create(leftHand);
                 }
             case "<":
-                plcLHS = visit(ast.getLeft());
-                plcRHS = visit(ast.getRight());
-
-                if(plcRHS.getValue() instanceof Comparable && plcLHS.getValue() instanceof Comparable){
-                    if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())){
-                        if(plcLHS.getValue() instanceof BigInteger){
-                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                if(RHS.getValue() instanceof Comparable && LHS.getValue() instanceof Comparable){
+                    if(LHS.getValue().getClass().equals(RHS.getValue().getClass())){
+                        if(LHS.getValue() instanceof BigInteger){
+                            int compareResult = requireType(BigInteger.class, LHS).compareTo(requireType(BigInteger.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -226,8 +217,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.FALSE);
                             }
-                        }else if(plcLHS.getValue() instanceof BigDecimal){
-                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                        }else if(LHS.getValue() instanceof BigDecimal){
+                            int compareResult = requireType(BigInteger.class, LHS).compareTo(requireType(BigInteger.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -235,8 +226,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.FALSE);
                             }
-                        } else if(plcLHS.getValue() instanceof Boolean){
-                            int compareResult = requireType(Boolean.class, plcLHS).compareTo(requireType(Boolean.class, plcRHS));
+                        } else if(LHS.getValue() instanceof Boolean){
+                            int compareResult = requireType(Boolean.class, LHS).compareTo(requireType(Boolean.class, RHS));
                             switch (compareResult){
                                 case -1:
                                 case 0:
@@ -244,8 +235,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.TRUE);
                             }
-                        } else if(plcLHS.getValue() instanceof Character){
-                            int compareResult = requireType(Character.class, plcLHS).compareTo(requireType(Character.class, plcRHS));
+                        } else if(LHS.getValue() instanceof Character){
+                            int compareResult = requireType(Character.class, LHS).compareTo(requireType(Character.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -258,13 +249,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 }
                 break;
             case ">":
-                plcLHS = visit(ast.getLeft());
-                plcRHS = visit(ast.getRight());
-
-                if(plcRHS.getValue() instanceof Comparable && plcLHS.getValue() instanceof Comparable){
-                    if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())){
-                        if(plcLHS.getValue() instanceof BigInteger){
-                            int compareResult = requireType(BigInteger.class, plcLHS).compareTo(requireType(BigInteger.class, plcRHS));
+                if(RHS.getValue() instanceof Comparable && LHS.getValue() instanceof Comparable){
+                    if(LHS.getValue().getClass().equals(RHS.getValue().getClass())){
+                        if(LHS.getValue() instanceof BigInteger){
+                            int compareResult = requireType(BigInteger.class, LHS).compareTo(requireType(BigInteger.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -272,8 +260,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.FALSE);
                             }
-                        }else if(plcLHS.getValue() instanceof BigDecimal){
-                            int compareResult = requireType(BigDecimal.class, plcLHS).compareTo(requireType(BigDecimal.class, plcRHS));
+                        }else if(LHS.getValue() instanceof BigDecimal){
+                            int compareResult = requireType(BigDecimal.class, LHS).compareTo(requireType(BigDecimal.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.FALSE);
@@ -281,8 +269,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.TRUE);
                             }
-                        }else if(plcLHS.getValue() instanceof Boolean){
-                            int compareResult = requireType(Boolean.class, plcLHS).compareTo(requireType(Boolean.class, plcRHS));
+                        }else if(LHS.getValue() instanceof Boolean){
+                            int compareResult = requireType(Boolean.class, LHS).compareTo(requireType(Boolean.class, RHS));
                             switch (compareResult){
                                 case -1:
                                 case 0:
@@ -290,8 +278,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                 case 1:
                                     return Environment.create(Boolean.TRUE);
                             }
-                        }else if(plcLHS.getValue() instanceof Character){
-                            int compareResult = requireType(Character.class, plcLHS).compareTo(requireType(Character.class, plcRHS));
+                        }else if(LHS.getValue() instanceof Character){
+                            int compareResult = requireType(Character.class, LHS).compareTo(requireType(Character.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -304,81 +292,63 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 }
                 break;
             case "==":
-                plcLHS = visit(ast.getLeft());
-                plcRHS = visit(ast.getRight());
-                if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())) {
-                    return Environment.create(plcLHS.getValue().equals(plcRHS.getValue()));
+                if(LHS.getValue().getClass().equals(RHS.getValue().getClass())) {
+                    return Environment.create(LHS.getValue().equals(RHS.getValue()));
                 }
                 break;
             case "!=":
-                plcLHS = visit(ast.getLeft());
-                plcRHS = visit(ast.getRight());
-                if(plcLHS.getValue().getClass().equals(plcRHS.getValue().getClass())) {
-                    return Environment.create(!plcLHS.getValue().equals(plcRHS.getValue()));
+                if(LHS.getValue().getClass().equals(RHS.getValue().getClass())) {
+                    return Environment.create(!LHS.getValue().equals(RHS.getValue()));
                 }
                 break;
             case "+":
-                // If either is a string; concatenate
-                // TODO: Complete case for null
-                LHS = visit(ast.getLeft()).getValue();
-                RHS = visit(ast.getRight()).getValue();
-                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
-                    return Environment.create(((BigDecimal) LHS).add((BigDecimal) RHS));
+                if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS.getValue()).add((BigDecimal) RHS.getValue()));
                 }
-                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
-                    return Environment.create(((BigInteger) LHS).add((BigInteger) RHS));
+                if (LHS.getValue() instanceof BigInteger && RHS.getValue() instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS.getValue()).add((BigInteger) RHS.getValue()));
                 }
-                if (LHS instanceof String || RHS instanceof String){
-                    return Environment.create(LHS.toString() + RHS.toString());
+                if (LHS.getValue() instanceof String || RHS.getValue() instanceof String){
+                    return Environment.create(LHS.getValue().toString() + RHS.getValue().toString());
                 }
-                if (LHS.toString().equals("nil") || RHS.toString().equals("nil"))
+                if (LHS.getValue().toString().equals("nil") || RHS.getValue().toString().equals("nil"))
                     return Environment.create(LHS.toString().concat(RHS.toString()));
 
                 throw new RuntimeException("LHS and RHS must match type or one must be a string");
             case "-":
-                LHS = visit(ast.getLeft()).getValue();
-                RHS = visit(ast.getRight()).getValue();
-                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
-                    return Environment.create(((BigDecimal) LHS).subtract((BigDecimal) RHS));
+                if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS.getValue()).subtract((BigDecimal) RHS.getValue()));
                 }
-                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
-                    return Environment.create(((BigInteger) LHS).subtract((BigInteger) RHS));
+                if (LHS.getValue() instanceof BigInteger && RHS.getValue() instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS.getValue()).subtract((BigInteger) RHS.getValue()));
                 }
                 throw new RuntimeException("LHS and RHS must match type");
             case "*":
-                LHS = visit(ast.getLeft()).getValue();
-                RHS = visit(ast.getRight()).getValue();
-                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
-                    return Environment.create(((BigDecimal) LHS).multiply((BigDecimal) RHS));
+                if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal){
+                    return Environment.create(((BigDecimal) LHS.getValue()).multiply((BigDecimal) RHS.getValue()));
                 }
-                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
-                    return Environment.create(((BigInteger) LHS).multiply((BigInteger) RHS));
+                if (LHS.getValue() instanceof BigInteger && RHS.getValue() instanceof BigInteger){
+                    return Environment.create(((BigInteger) LHS.getValue()).multiply((BigInteger) RHS.getValue()));
                 }
                 throw new RuntimeException("LHS and RHS must match type");
             case "/":
-                LHS = visit(ast.getLeft()).getValue();
-                RHS = visit(ast.getRight()).getValue();
-
                 if (LHS == null || RHS == null)
                     throw new RuntimeException("Division with null value");
 
                 if (RHS.toString().equals("0") || RHS.toString().equals("0.0"))
                     throw new RuntimeException("Divide by Zero");
 
-                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal)
-                    return Environment.create((((BigDecimal) LHS).divide((BigDecimal) RHS, RoundingMode.HALF_EVEN)));
-                if (LHS instanceof BigInteger && RHS instanceof BigInteger)
-                    return Environment.create(((BigInteger) LHS).divide((BigInteger) RHS));
+                if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal)
+                    return Environment.create((((BigDecimal) LHS.getValue()).divide((BigDecimal) RHS.getValue(), RoundingMode.HALF_EVEN)));
+                if (LHS.getValue() instanceof BigInteger && RHS.getValue() instanceof BigInteger)
+                    return Environment.create(((BigInteger) LHS.getValue()).divide((BigInteger) RHS.getValue()));
 
                 throw new RuntimeException("Division on unmatched or invalid type");
             case "^":
-                LHS = visit(ast.getLeft()).getValue();
-                RHS = visit(ast.getRight()).getValue();
-
-                if (!(LHS instanceof BigInteger) || !(RHS instanceof BigInteger))
+                if (!(LHS.getValue() instanceof BigInteger) || !(RHS.getValue() instanceof BigInteger))
                     throw new RuntimeException("Exponentiation on invalid type");
 
-                BigInteger res = ((BigInteger) LHS).pow(((BigInteger) RHS).intValue());
+                BigInteger res = ((BigInteger) LHS.getValue()).pow(((BigInteger) RHS.getValue()).intValue());
 
                 return  Environment.create(res);
         }
@@ -389,7 +359,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Access ast) {
         // Case of direct access to variable
-        if (!ast.getOffset().isPresent())
+        if (ast.getOffset().isEmpty())
             return scope.lookupVariable(ast.getName()).getValue();
 
         // Offset is of incorrect type

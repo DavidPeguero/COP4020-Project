@@ -308,7 +308,9 @@ final class InterpreterTests {
     @ParameterizedTest
     @MethodSource
     void testBinaryExpression(String test, Ast ast, Object expected) {
-        test(ast, expected, new Scope(null));
+        Scope scope = new Scope(null);
+        scope.defineVariable("undefined", true, Environment.create("undefined"));
+        test(ast, expected, scope);
     }
 
     private static Stream<Arguments> testBinaryExpression() {
