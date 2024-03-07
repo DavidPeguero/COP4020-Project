@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Formatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -328,16 +329,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 if (RHS.toString().equals("0") || RHS.toString().equals("0.0"))
                     throw new RuntimeException("Divide by Zero");
 
-                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
+                if (LHS instanceof BigDecimal && RHS instanceof BigDecimal)
                     return Environment.create((((BigDecimal) LHS).divide((BigDecimal) RHS, RoundingMode.HALF_EVEN)));
-                }
-                if (LHS instanceof BigInteger && RHS instanceof BigInteger){
+                if (LHS instanceof BigInteger && RHS instanceof BigInteger)
                     return Environment.create(((BigInteger) LHS).divide((BigInteger) RHS));
-                }
 
-                throw new RuntimeException("LHS and RHS must match type");
+                throw new RuntimeException("Division on unmatched or invalid type");
             case "^":
-                break;
+                LHS = visit(ast.getLeft()).getValue();
+                RHS = visit(ast.getRight()).getValue();
+
+                if (!(LHS instanceof BigInteger) || !(RHS instanceof BigInteger))
+                    throw new RuntimeException("Exponentiation on invalid type");
+
+                BigInteger res = ((BigInteger) LHS).pow(((BigInteger) RHS).intValue());
+
+                return  Environment.create(res);
         }
 
         return Environment.NIL;

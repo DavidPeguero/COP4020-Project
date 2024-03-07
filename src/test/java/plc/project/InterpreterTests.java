@@ -393,7 +393,23 @@ final class InterpreterTests {
                                 new Ast.Expression.Literal(new BigInteger("1000000000"))
                         ),
                         new BigInteger("3000000000")
-                )
+                ),
+                // 3^5
+                Arguments.of("Exponentiation",
+                        new Ast.Expression.Binary("^",
+                                new Ast.Expression.Literal(new BigInteger("3")),
+                                new Ast.Expression.Literal(new BigInteger("5"))
+                        ),
+                        new BigInteger("243")
+                ),
+                // 100^7
+                Arguments.of("Exponentiation out of bounds int",
+                        new Ast.Expression.Binary("^",
+                                new Ast.Expression.Literal(new BigInteger("100")),
+                                new Ast.Expression.Literal(new BigInteger("7"))
+                        ),
+                        new BigInteger("100000000000000")
+               )
         );
     }
 
