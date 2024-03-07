@@ -49,7 +49,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+
+        if (ast.getExpression() instanceof Ast.Expression.Function)
+            visit(ast.getExpression());
+
+        return Environment.NIL;
     }
 
     @Override
@@ -100,17 +104,47 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             scope = scope.getParent();
         }
         return Environment.NIL;
-//        throw new UnsupportedOperationException(); //TODO
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Switch ast) {
-        throw new UnsupportedOperationException(); //TODO
+        /* TODO:
+         *  Inside of a new scope, if the condition is equivalent to a CASE value,
+         *  evaluate the statements for that case, otherwise evaluate the statements of the DEFAULT.
+         *  Returns NIL.
+         */
+        try {
+            scope = new Scope(scope);
+            Environment.PlcObject condition = visit(ast.getCondition());
+
+            int size = 0;
+            for (Ast.Statement.Case _case : ast.getCases()){
+                // Match on first case value
+                if (_case.getValue().isPresent() && visit(_case.getValue().get()).getValue().equals(condition.getValue())) {
+                    visit(_case);
+                    break;
+                }
+                else if (size == ast.getCases().size() - 1) // DEFAULT CASE
+                    visit(_case);
+                size++;
+            }
+        } finally {
+            scope = scope.getParent();
+        }
+        return Environment.NIL;
     }
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Case ast) {
-        throw new UnsupportedOperationException(); //TODO
+
+        try{
+            scope = new Scope(scope);
+            ast.getStatements().forEach(this::visit);
+        }
+        finally {
+            scope = scope.getParent();
+        }
+        return Environment.NIL;
     }
 
     @Override
@@ -285,18 +319,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 break;
             case "+":
                 // If either is a string; concatenate
-                // if LHS is number/decimal then RHS must match
+                // TODO: Complete case for null
                 LHS = visit(ast.getLeft()).getValue();
                 RHS = visit(ast.getRight()).getValue();
-                if (LHS instanceof String || RHS instanceof String){
-                    return Environment.create(LHS.toString() + RHS.toString());
-                }
                 if (LHS instanceof BigDecimal && RHS instanceof BigDecimal){
                     return Environment.create(((BigDecimal) LHS).add((BigDecimal) RHS));
                 }
                 if (LHS instanceof BigInteger && RHS instanceof BigInteger){
                     return Environment.create(((BigInteger) LHS).add((BigInteger) RHS));
                 }
+                if (LHS instanceof String || RHS instanceof String){
+                    return Environment.create(LHS.toString() + RHS.toString());
+                }
+                if (LHS.toString().equals("nil") || RHS.toString().equals("nil"))
+                    return Environment.create(LHS.toString().concat(RHS.toString()));
 
                 throw new RuntimeException("LHS and RHS must match type or one must be a string");
             case "-":
@@ -376,7 +412,25 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        Environment.PlcObject returnVal;
+        try{
+            scope = new Scope(scope);
+            Environment.Function function = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+            if (function.getArity() == 0){
+                returnVal = function.invoke(new ArrayList<>());
+            }
+            else {
+                List<Environment.PlcObject> arguments = new ArrayList<>();
+                ast.getArguments().forEach( (arg) -> {
+                    arguments.add(visit(arg));
+                });
+                returnVal = function.invoke(arguments);
+            }
+        }
+        finally {
+            scope = scope.getParent();
+        }
+        return returnVal;
     }
 
     @Override
