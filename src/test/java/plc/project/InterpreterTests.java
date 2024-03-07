@@ -212,16 +212,16 @@ final class InterpreterTests {
     void testSwitchStatement() {
         // SWITCH letter CASE 'y': print("yes"); letter = 'n'; DEFAULT: print("no"); END
         Scope scope = new Scope(null);
-        scope.defineVariable("letter", true, Environment.create(new Character('y')));
+        scope.defineVariable("letter", true, Environment.create('y'));
 
         List<Ast.Statement> statements = Arrays.asList(
                 new Ast.Statement.Expression(new Ast.Expression.Function("print", Arrays.asList(new Ast.Expression.Literal("yes")))),
                 new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "letter"),
-                                             new Ast.Expression.Literal(new Character('n')))
+                                             new Ast.Expression.Literal('n'))
         );
 
         List<Ast.Statement.Case> cases = Arrays.asList(
-                new Ast.Statement.Case(Optional.of(new Ast.Expression.Literal(new Character('y'))), statements),
+                new Ast.Statement.Case(Optional.of(new Ast.Expression.Literal('y')), statements),
                 new Ast.Statement.Case(Optional.empty(), Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Function("print", Arrays.asList(new Ast.Expression.Literal("no"))))))
         );
 
@@ -237,7 +237,7 @@ final class InterpreterTests {
             System.setOut(sysout);
         }
 
-        Assertions.assertEquals(new Character('n'), scope.lookupVariable("letter").getValue().getValue());
+        Assertions.assertEquals('n', scope.lookupVariable("letter").getValue().getValue());
     }
 
     @Test
