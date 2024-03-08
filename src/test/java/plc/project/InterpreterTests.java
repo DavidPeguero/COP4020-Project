@@ -308,14 +308,13 @@ final class InterpreterTests {
     @ParameterizedTest
     @MethodSource
     void testBinaryExpression(String test, Ast ast, Object expected) {
-        Scope scope = new Scope(null);
-        scope.defineVariable("undefined", true, Environment.create("undefined"));
-        test(ast, expected, scope);
+        test(ast, expected, null);
     }
 
     private static Stream<Arguments> testBinaryExpression() {
         return Stream.of(
                 // TRUE && FALSE
+                // TODO: Make shortcircuit
                 Arguments.of("And",
                         new Ast.Expression.Binary("&&",
                                 new Ast.Expression.Literal(true),
@@ -324,6 +323,7 @@ final class InterpreterTests {
                         false
                 ),
                 // TRUE || undefined
+                // TODO: Make shortcircuit
                 Arguments.of("Or (Short Circuit)",
                         new Ast.Expression.Binary("||",
                                 new Ast.Expression.Literal(true),
@@ -478,6 +478,32 @@ final class InterpreterTests {
         Ast ast = new Ast.Expression.PlcList(values);
 
         test(ast, expected, new Scope(null));
+    }
+
+    // From Lecture
+    @Test
+    void testLogarithmExpressionStatement(){
+        Scope scope = new Scope(null);
+        test(new Ast.Expression.Function(
+                "logarithm",
+                List.of(new Ast.Expression.Literal(BigDecimal.valueOf(Math.E)))),
+                BigDecimal.valueOf(1.0),
+                scope
+                );
+    }
+
+    // From Lecture
+    @Test
+    void testLogarithmExpressionException(){
+        Scope scope = new Scope(null);
+        test(new Ast.Expression.Function(
+                        "logarithm",
+                        List.of(new Ast.Expression.Literal(BigInteger.valueOf(3)))),
+
+                // null checks for exception cases, if it works it means there was an exception
+                null,
+                scope
+        );
     }
 
     /*
