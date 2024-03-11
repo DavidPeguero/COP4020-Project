@@ -19,6 +19,28 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             System.out.println(args.get(0).getValue());
             return Environment.NIL;
         });
+
+        // From lecture
+        scope.defineFunction("logarithm", 1, args -> {
+
+            // Can shorten by using requireType here (see bigDecimal2)
+            if (!(args.get(0).getValue() instanceof BigDecimal))
+                throw new RuntimeException("expected type BigDecimal. received,  " +
+                        args.get(0).getValue().getClass().getName());
+            BigDecimal bigDecimal1 = (BigDecimal) args.get(0).getValue();
+
+
+            BigDecimal bigDecimal2 = requireType(BigDecimal.class, Environment.create(args.get(0).getValue()));
+
+            BigDecimal res = BigDecimal.valueOf(Math.log(bigDecimal2.doubleValue()));
+            return Environment.create(res);
+        });
+
+        // From Lecture
+//        scope.defineFunction("converter", 2, args -> {
+//            BigInteger base10Decimal = requireType(BigInteger.class, Environment.create(args.get(0).getValue()));
+//            BigInteger base = requireType(BigInteger.class, Environment.create(args.get(1).getValue()));
+//        });
     }
 
     public Scope getScope() {

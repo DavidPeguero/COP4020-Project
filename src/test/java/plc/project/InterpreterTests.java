@@ -212,16 +212,16 @@ final class InterpreterTests {
     void testSwitchStatement() {
         // SWITCH letter CASE 'y': print("yes"); letter = 'n'; DEFAULT: print("no"); END
         Scope scope = new Scope(null);
-        scope.defineVariable("letter", true, Environment.create(new Character('y')));
+        scope.defineVariable("letter", true, Environment.create('y'));
 
         List<Ast.Statement> statements = Arrays.asList(
                 new Ast.Statement.Expression(new Ast.Expression.Function("print", Arrays.asList(new Ast.Expression.Literal("yes")))),
                 new Ast.Statement.Assignment(new Ast.Expression.Access(Optional.empty(), "letter"),
-                                             new Ast.Expression.Literal(new Character('n')))
+                                             new Ast.Expression.Literal('n'))
         );
 
         List<Ast.Statement.Case> cases = Arrays.asList(
-                new Ast.Statement.Case(Optional.of(new Ast.Expression.Literal(new Character('y'))), statements),
+                new Ast.Statement.Case(Optional.of(new Ast.Expression.Literal('y')), statements),
                 new Ast.Statement.Case(Optional.empty(), Arrays.asList(new Ast.Statement.Expression(new Ast.Expression.Function("print", Arrays.asList(new Ast.Expression.Literal("no"))))))
         );
 
@@ -237,7 +237,7 @@ final class InterpreterTests {
             System.setOut(sysout);
         }
 
-        Assertions.assertEquals(new Character('n'), scope.lookupVariable("letter").getValue().getValue());
+        Assertions.assertEquals('n', scope.lookupVariable("letter").getValue().getValue());
     }
 
     @Test
@@ -308,14 +308,13 @@ final class InterpreterTests {
     @ParameterizedTest
     @MethodSource
     void testBinaryExpression(String test, Ast ast, Object expected) {
-        Scope scope = new Scope(null);
-        scope.defineVariable("undefined", true, Environment.create("undefined"));
-        test(ast, expected, scope);
+        test(ast, expected, null);
     }
 
     private static Stream<Arguments> testBinaryExpression() {
         return Stream.of(
                 // TRUE && FALSE
+                // TODO: Make shortcircuit
                 Arguments.of("And",
                         new Ast.Expression.Binary("&&",
                                 new Ast.Expression.Literal(true),
@@ -324,6 +323,7 @@ final class InterpreterTests {
                         false
                 ),
                 // TRUE || undefined
+                // TODO: Make shortcircuit
                 Arguments.of("Or (Short Circuit)",
                         new Ast.Expression.Binary("||",
                                 new Ast.Expression.Literal(true),
@@ -478,6 +478,32 @@ final class InterpreterTests {
         Ast ast = new Ast.Expression.PlcList(values);
 
         test(ast, expected, new Scope(null));
+    }
+
+    // From Lecture
+    @Test
+    void testLogarithmExpressionStatement(){
+        Scope scope = new Scope(null);
+        test(new Ast.Expression.Function(
+                "logarithm",
+                List.of(new Ast.Expression.Literal(BigDecimal.valueOf(Math.E)))),
+                BigDecimal.valueOf(1.0),
+                scope
+                );
+    }
+
+    // From Lecture
+    @Test
+    void testLogarithmExpressionException(){
+        Scope scope = new Scope(null);
+        test(new Ast.Expression.Function(
+                        "logarithm",
+                        List.of(new Ast.Expression.Literal(BigInteger.valueOf(3)))),
+
+                // null checks for exception cases, if it works it means there was an exception
+                null,
+                scope
+        );
     }
 
     /*
