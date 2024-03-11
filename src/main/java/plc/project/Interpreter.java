@@ -1,5 +1,6 @@
 package plc.project;
 
+import java.io.Console;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -26,7 +27,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        ast.getGlobals().forEach(this::visit);
+        ast.getFunctions().forEach(this::visit);
+
+        return scope.lookupFunction("main", 0).invoke(new ArrayList<>());
     }
 
     @Override
@@ -42,9 +46,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            try{
+                List<String> parameter = ast.getParameters();
+                for(int i = 0; i <ast.getParameters().size(); i++){
+                    scope.defineVariable(parameter.get(i), true, Environment.create(args.get(i).getValue()));
+                    System.out.println(scope.lookupVariable(parameter.get(i)));
+                }
+                ast.getStatements().forEach(this::visit);
+            }
+            catch (Return e){
+                return e.value;
+            }
             return Environment.NIL;
         });
-        throw new UnsupportedOperationException(); //TODO
+        return Environment.NIL;
     }
 
     @Override
@@ -163,8 +178,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Return ast) {
-        return visit(ast.getValue());
-//        throw new UnsupportedOperationException(); //TODO
+        throw new Return(visit(ast.getValue()));
     }
 
     @Override
@@ -392,6 +406,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             else {
                 List<Environment.PlcObject> arguments = new ArrayList<>();
                 ast.getArguments().forEach( (arg) -> {
+
                     arguments.add(visit(arg));
                 });
                 returnVal = function.invoke(arguments);
