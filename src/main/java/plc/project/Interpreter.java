@@ -218,8 +218,23 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Binary ast) {
         Environment.PlcObject LHS = visit(ast.getLeft());
-        Environment.PlcObject RHS = visit(ast.getRight());
         Boolean leftHand;
+
+        // Short-Circuit if needed
+        switch(ast.getOperator()){
+            case "&&":
+                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
+                if (!leftHand)
+                    return Environment.create(false);
+                break;
+            case "||":
+                leftHand = requireType(Boolean.class, visit(ast.getLeft()));
+                if (leftHand)
+                    return Environment.create(true);
+                break;
+        }
+
+        Environment.PlcObject RHS = visit(ast.getRight());
         Boolean rightHand;
 
         switch(ast.getOperator()){
