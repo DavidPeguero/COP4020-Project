@@ -43,7 +43,39 @@ final class InterpreterTests {
                                         new Ast.Expression.Access(Optional.empty(), "x"),
                                         new Ast.Expression.Access(Optional.empty(), "y")                                ))
                         )))
-                ), Environment.NIL.getValue())
+                ), Environment.NIL.getValue()),
+                /*
+                        VAR x = 1;
+                        VAR y = 2;
+                        VAR z = 3;
+                        FUN f(z) DO
+                            RETURN x + y + z;
+                        END
+                        FUN main() DO
+                            LET y = 4;
+                            RETURN f(5);
+                        END
+                */
+                Arguments.of("Declaration in function",
+                        new Ast.Source(
+                                Arrays.asList(
+                                    new Ast.Global("x", true, Optional.of(new Ast.Expression.Literal(1))),
+                                    new Ast.Global("y", true, Optional.of(new Ast.Expression.Literal(2))),
+                                    new Ast.Global("z", true, Optional.of(new Ast.Expression.Literal(3)))),
+                                Arrays.asList(
+                                    new Ast.Function("f", Arrays.asList("z"), Arrays.asList(
+                                            new Ast.Statement.Return(new Ast.Expression.Binary("+",
+                                                    new Ast.Expression.Binary("+", new Ast.Expression.Access(Optional.empty(),"x"), new Ast.Expression.Access(Optional.empty(),"y"))
+                                                    ,new Ast.Expression.Access(Optional.empty(), "z"))))
+                                    ),
+                                    new Ast.Function("main", Arrays.asList(), Arrays.asList(
+                                            new Ast.Statement.Declaration("y", Optional.of(new Ast.Expression.Literal(4))),
+                                            new Ast.Statement.Return(new Ast.Expression.Function("f", Arrays.asList(new Ast.Expression.Literal(5))))
+                                    ))
+                                )
+                        ), Environment.create(8)
+                )
+
         );
     }
 

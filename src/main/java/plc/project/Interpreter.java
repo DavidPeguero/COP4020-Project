@@ -45,7 +45,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     public Scope getScope() {
         return scope;
-    }
+    }   
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
