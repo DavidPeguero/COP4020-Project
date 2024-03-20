@@ -151,11 +151,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Statement.Switch ast) {
-        /* TODO:
-         *  Inside of a new scope, if the condition is equivalent to a CASE value,
-         *  evaluate the statements for that case, otherwise evaluate the statements of the DEFAULT.
-         *  Returns NIL.
-         */
         try {
             scope = new Scope(scope);
             Environment.PlcObject condition = visit(ast.getCondition());
