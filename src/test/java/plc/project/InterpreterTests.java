@@ -33,7 +33,7 @@ final class InterpreterTests {
                         ))
                 ), BigInteger.ZERO),
                 // VAR x = 1; VAR y = 10; FUN main() DO x + y; END
-                Arguments.of("Globals & No Return", new Ast.Source(
+Arguments.of("Globals & No Return", new Ast.Source(
                         Arrays.asList(
                                 new Ast.Global("x", true, Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
                                 new Ast.Global("y", true, Optional.of(new Ast.Expression.Literal(BigInteger.TEN)))
@@ -59,9 +59,9 @@ final class InterpreterTests {
                 Arguments.of("Declaration in function",
                         new Ast.Source(
                                 Arrays.asList(
-                                    new Ast.Global("x", true, Optional.of(new Ast.Expression.Literal(1))),
-                                    new Ast.Global("y", true, Optional.of(new Ast.Expression.Literal(2))),
-                                    new Ast.Global("z", true, Optional.of(new Ast.Expression.Literal(3)))),
+                                    new Ast.Global("x", true, Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(1)))),
+                                    new Ast.Global("y", true, Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(2)))),
+                                    new Ast.Global("z", true, Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(3))))),
                                 Arrays.asList(
                                     new Ast.Function("f", Arrays.asList("z"), Arrays.asList(
                                             new Ast.Statement.Return(new Ast.Expression.Binary("+",
@@ -69,11 +69,11 @@ final class InterpreterTests {
                                                     ,new Ast.Expression.Access(Optional.empty(), "z"))))
                                     ),
                                     new Ast.Function("main", Arrays.asList(), Arrays.asList(
-                                            new Ast.Statement.Declaration("y", Optional.of(new Ast.Expression.Literal(4))),
-                                            new Ast.Statement.Return(new Ast.Expression.Function("f", Arrays.asList(new Ast.Expression.Literal(5))))
+                                            new Ast.Statement.Declaration("y", Optional.of(new Ast.Expression.Literal(BigInteger.valueOf(4)))),
+                                            new Ast.Statement.Return(new Ast.Expression.Function("f", Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5)))))
                                     ))
                                 )
-                        ), Environment.create(8)
+                        ), Environment.create(BigInteger.valueOf(10)).getValue()
                 )
 
         );

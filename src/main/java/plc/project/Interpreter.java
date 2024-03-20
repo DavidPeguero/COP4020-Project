@@ -67,8 +67,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
+
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
             try{
+                scope = new Scope(scope);
                 List<String> parameter = ast.getParameters();
                 for(int i = 0; i <ast.getParameters().size(); i++){
                     scope.defineVariable(parameter.get(i), true, Environment.create(args.get(i).getValue()));
@@ -77,7 +79,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 ast.getStatements().forEach(this::visit);
             }
             catch (Return e){
+                scope = scope.getParent();
                 return e.value;
+            }
+            finally {
+                scope = scope.getParent();
             }
             return Environment.NIL;
         });
@@ -364,7 +370,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 }
                 if (LHS.getValue().toString().equals("nil") || RHS.getValue().toString().equals("nil"))
                     return Environment.create(LHS.toString().concat(RHS.toString()));
-
+                System.out.println(LHS.getValue().getClass());
+                System.out.println(RHS.getValue().getClass());
                 throw new RuntimeException("LHS and RHS must match type or one must be a string");
             case "-":
                 if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal){
@@ -434,24 +441,19 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
     @Override
     public Environment.PlcObject visit(Ast.Expression.Function ast) {
         Environment.PlcObject returnVal;
-        try{
-            scope = new Scope(scope);
-            Environment.Function function = scope.lookupFunction(ast.getName(), ast.getArguments().size());
-            if (function.getArity() == 0){
-                returnVal = function.invoke(new ArrayList<>());
-            }
-            else {
-                List<Environment.PlcObject> arguments = new ArrayList<>();
-                ast.getArguments().forEach( (arg) -> {
+        Environment.Function function = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+        if (function.getArity() == 0){
+            returnVal = function.invoke(new ArrayList<>());
+        }
+        else {
+            List<Environment.PlcObject> arguments = new ArrayList<>();
+            ast.getArguments().forEach( (arg) -> {
 
-                    arguments.add(visit(arg));
-                });
-                returnVal = function.invoke(arguments);
-            }
+                arguments.add(visit(arg));
+            });
+            returnVal = function.invoke(arguments);
         }
-        finally {
-            scope = scope.getParent();
-        }
+
         return returnVal;
     }
 
