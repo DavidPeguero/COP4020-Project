@@ -33,7 +33,7 @@ final class InterpreterTests {
                         ))
                 ), BigInteger.ZERO),
                 // VAR x = 1; VAR y = 10; FUN main() DO x + y; END
-Arguments.of("Globals & No Return", new Ast.Source(
+                Arguments.of("Globals & No Return", new Ast.Source(
                         Arrays.asList(
                                 new Ast.Global("x", true, Optional.of(new Ast.Expression.Literal(BigInteger.ONE))),
                                 new Ast.Global("y", true, Optional.of(new Ast.Expression.Literal(BigInteger.TEN)))
@@ -73,9 +73,8 @@ Arguments.of("Globals & No Return", new Ast.Source(
                                             new Ast.Statement.Return(new Ast.Expression.Function("f", Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5)))))
                                     ))
                                 )
-                        ), Environment.create(BigInteger.valueOf(10)).getValue()
+                        ), BigInteger.TEN
                 )
-
         );
     }
 
