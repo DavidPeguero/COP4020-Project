@@ -65,6 +65,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         return Environment.NIL;
     }
 
+    // TODO: Separate the scopes so that the line becomes a tree for end to end submission
+    /*
+        global
+          /  \
+         f    main
+     */
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
 
