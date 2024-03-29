@@ -25,6 +25,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     @Override
+    /*
+    * Visits globals followed by functions (following the left-depth-first traversal of the AST).
+    * Throws a RuntimeException if:
+    *   A main/0 function (name = main, arity = 0) does not exist.
+    *   The main/0 function does not have an Integer return type.
+    * Returns null.
+    */
     public Void visit(Ast.Source ast) {
         throw new UnsupportedOperationException();  // TODO
     }
@@ -79,9 +86,30 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new UnsupportedOperationException();  // TODO
     }
 
+    // TODO: Test this
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // https://stackoverflow.com/questions/5579309/is-it-possible-to-use-the-instanceof-operator-in-a-switch-statement
+        switch (ast.getLiteral()){
+            case Character c : ast.setType(Environment.Type.CHARACTER); break;
+            case Boolean b : ast.setType(Environment.Type.BOOLEAN); break;
+            case String s : ast.setType(Environment.Type.STRING); break;
+            case null : ast.setType(Environment.Type.NIL); break;
+            case BigInteger i :
+                if (i.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0 ||
+                        i.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0)
+                    throw new RuntimeException("Integer value out of bounds");
+                ast.setType(Environment.Type.INTEGER);
+                break;
+            case BigDecimal d :
+                if (d.doubleValue() == Double.NEGATIVE_INFINITY ||
+                        d.doubleValue() == Double.POSITIVE_INFINITY)
+                    throw new RuntimeException("Decimal value out of bounds");
+                ast.setType(Environment.Type.DECIMAL);
+                break;
+            default:
+        }
+        return null;
     }
 
     @Override
@@ -110,7 +138,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!target.equals(type))
+            throw new RuntimeException("Assignable target does not match type");
     }
 
 }
