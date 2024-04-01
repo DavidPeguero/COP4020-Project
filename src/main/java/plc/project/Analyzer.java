@@ -134,15 +134,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if (ast.getThenStatements().isEmpty())
             throw new RuntimeException("Empty if-body block");
 
-        scope = new Scope(scope);
-        for (Ast.Statement statement: ast.getThenStatements())
-            visit(statement);
-        scope = scope.getParent();
-
-        scope = new Scope(scope);
-        for (Ast.Statement statement : ast.getElseStatements())
-            visit(statement);
-        scope = scope.getParent();
+        visit(ast.getThenStatements());
+        visit(ast.getElseStatements());
 
         return null;
     }
@@ -168,10 +161,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Case ast) {
-        scope = new Scope(scope);
-        for (Ast.Statement statement : ast.getStatements())
-            visit (statement);
-        scope = scope.getParent();
+        visit(ast.getStatements());
         return null;
     }
 
@@ -320,6 +310,15 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expression.PlcList ast) {
         throw new UnsupportedOperationException();  // TODO
+    }
+
+    public Void visit(List<Ast.Statement> statements){
+        scope = new Scope(scope);
+        for (Ast.Statement statement: statements)
+            visit(statement);
+        scope = scope.getParent();
+
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
