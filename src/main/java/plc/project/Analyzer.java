@@ -58,7 +58,34 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // First check if receiver is an access otherwise return
+        // visit access to make sure that is valid
+        // check if value is assignable to ast
+        // Check the type of receiver and make sure there is a valid value being assigned to it.
+        if(!(ast.getReceiver() instanceof  Ast.Expression.Access)){
+            throw new RuntimeException("Not an access expression");
+        }
+        visit(ast.getReceiver());
+        visit(ast.getValue());
+        Environment.Variable variable = scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName());
+
+
+        if(variable.getType().equals(Environment.Type.COMPARABLE)){
+            if(!ast.getValue().getType().equals(Environment.Type.INTEGER)
+            && !ast.getValue().getType().equals(Environment.Type.DECIMAL)
+            && !ast.getValue().getType().equals(Environment.Type.CHARACTER)
+            && !ast.getValue().getType().equals(Environment.Type.STRING))
+            {
+                throw new RuntimeException("Value type not assignable to comparable");
+            }
+        } else if(!variable.getType().equals(Environment.Type.ANY)){
+            requireAssignable(ast.getValue().getType(), ast.getReceiver().getType());
+        }
+
+
+
+        return null;
+//        throw new UnsupportedOperationException();  // TODO
     }
 
     @Override
@@ -124,7 +151,29 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if(ast.getOffset().isPresent()) {
+            System.out.println(ast.getOffset().get().getType());
+            requireAssignable(ast.getOffset().get().getType(), Environment.Type.INTEGER);
+        }
+
+        switch (scope.lookupVariable(ast.getName()).getType().getName()){
+            case "Integer":
+                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.INTEGER, true, Environment.NIL));
+                break;
+            case "String":
+                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.STRING, true, Environment.NIL));
+                break;
+            case "Decimal":
+                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.DECIMAL, true, Environment.NIL));
+                break;
+            case "Boolean":
+                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.BOOLEAN, true, Environment.NIL));
+                break;
+            case "Character":
+                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.CHARACTER, true, Environment.NIL));
+                break;
+        }
+        return null;
     }
 
     @Override
