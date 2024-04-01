@@ -53,7 +53,55 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Declaration ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if(ast.getValue().isPresent())
+            visit(ast.getValue().get());
+        if(ast.getTypeName().isPresent()) {
+            switch (ast.getTypeName().get()) {
+                case "Integer":
+                    if(ast.getValue().isPresent())
+                        requireAssignable(Environment.Type.INTEGER, ast.getValue().get().getType());
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, true, Environment.NIL));
+                    break;
+                case "String":
+                    if(ast.getValue().isPresent())
+                        requireAssignable(Environment.Type.STRING, ast.getValue().get().getType());
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.STRING, true, Environment.NIL));
+                    break;
+                case "Decimal":
+                    if(ast.getValue().isPresent())
+                        requireAssignable(Environment.Type.DECIMAL, ast.getValue().get().getType());
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.DECIMAL, true, Environment.NIL));
+                    break;
+                case "Boolean":
+                    if(ast.getValue().isPresent())
+                        requireAssignable(Environment.Type.BOOLEAN, ast.getValue().get().getType());
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.BOOLEAN, true, Environment.NIL));
+                    break;
+                case "Character":
+                    if(ast.getValue().isPresent())
+                        requireAssignable(Environment.Type.CHARACTER, ast.getValue().get().getType());
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.CHARACTER, true, Environment.NIL));
+                    break;
+                case "Any":
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.ANY, true, Environment.NIL));
+                    break;
+                case "Comparable":
+                    if(ast.getValue().isPresent()){
+                        requireAssignable(Environment.Type.COMPARABLE, ast.getValue().get().getType());
+                    }
+                    ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.COMPARABLE, true, Environment.NIL));
+                    break;
+                default:
+                    throw new RuntimeException("Unknown type for type name");
+            }
+        } else if(ast.getValue().isPresent()){
+                ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), ast.getValue().get().getType(), true, Environment.NIL));
+        } else {
+            throw new RuntimeException("Missing type in both typename or inferred type from value");
+        }
+
+
+        return null;
     }
 
     @Override
@@ -69,20 +117,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         visit(ast.getValue());
         Environment.Variable variable = scope.lookupVariable(((Ast.Expression.Access) ast.getReceiver()).getName());
 
-
-        if(variable.getType().equals(Environment.Type.COMPARABLE)){
-            if(!ast.getValue().getType().equals(Environment.Type.INTEGER)
-            && !ast.getValue().getType().equals(Environment.Type.DECIMAL)
-            && !ast.getValue().getType().equals(Environment.Type.CHARACTER)
-            && !ast.getValue().getType().equals(Environment.Type.STRING))
-            {
-                throw new RuntimeException("Value type not assignable to comparable");
-            }
-        } else if(!variable.getType().equals(Environment.Type.ANY)){
-            requireAssignable(ast.getValue().getType(), ast.getReceiver().getType());
-        }
-
-
+        requireAssignable(variable.getType(),ast.getValue().getType());
 
         return null;
 //        throw new UnsupportedOperationException();  // TODO
@@ -170,19 +205,19 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
         switch (scope.lookupVariable(ast.getName()).getType().getName()){
             case "Integer":
-                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.INTEGER, true, Environment.NIL));
+                ast.setVariable(new Environment.Variable(ast.getName(), ast.getName(), Environment.Type.INTEGER, true, Environment.NIL));
                 break;
             case "String":
-                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.STRING, true, Environment.NIL));
+                ast.setVariable(new Environment.Variable(ast.getName(), ast.getName(), Environment.Type.STRING, true, Environment.NIL));
                 break;
             case "Decimal":
-                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.DECIMAL, true, Environment.NIL));
+                ast.setVariable(new Environment.Variable(ast.getName(), ast.getName(), Environment.Type.DECIMAL, true, Environment.NIL));
                 break;
             case "Boolean":
-                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.BOOLEAN, true, Environment.NIL));
+                ast.setVariable(new Environment.Variable(ast.getName(), ast.getName(), Environment.Type.BOOLEAN, true, Environment.NIL));
                 break;
             case "Character":
-                ast.setVariable(new Environment.Variable(ast.getName(), "variable", Environment.Type.CHARACTER, true, Environment.NIL));
+                ast.setVariable(new Environment.Variable(ast.getName(), ast.getName(), Environment.Type.CHARACTER, true, Environment.NIL));
                 break;
         }
         return null;
@@ -190,7 +225,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Environment.Function function = scope.lookupFunction(ast.getName(), ast.getArguments().size());
+        for(int i = 0; i < function.getParameterTypes().size(); i++){
+            visit(ast.getArguments().get(i));
+            requireAssignable(function.getParameterTypes().get(i), ast.getArguments().get(i).getType());
+        }
+        ast.setFunction(new Environment.Function(ast.getName(), ast.getName(), function.getParameterTypes(), function.getReturnType(), args->  Environment.NIL ));
+        return null;
     }
 
     @Override
@@ -199,7 +240,18 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        if (!target.equals(type)) throw new RuntimeException("Assignable target does not match type");
+        if(target.equals(Environment.Type.ANY))
+            return;
+        else if(target.equals(Environment.Type.COMPARABLE)) {
+            if (!type.equals(Environment.Type.INTEGER)
+                    && !type.equals(Environment.Type.DECIMAL)
+                    && !type.equals(Environment.Type.STRING)
+                    && !type.equals(Environment.Type.CHARACTER)
+                    && !type.equals(Environment.Type.COMPARABLE)) {
+                throw new RuntimeException("Assignable target does not match type comparable");
+            }
+        }
+        else if (!target.equals(type)) throw new RuntimeException("Assignable target does not match type");
     }
 
 }
