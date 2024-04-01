@@ -48,7 +48,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!(ast.getExpression() instanceof Ast.Expression.Function))
+            throw new RuntimeException("Expected function in statement");
+        visit(ast.getExpression());
+        return null;
     }
 
     @Override
@@ -125,17 +128,51 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+
+        if (ast.getThenStatements().isEmpty())
+            throw new RuntimeException("Empty if-body block");
+
+        scope = new Scope(scope);
+        for (Ast.Statement statement: ast.getThenStatements())
+            visit(statement);
+        scope = scope.getParent();
+
+        scope = new Scope(scope);
+        for (Ast.Statement statement : ast.getElseStatements())
+            visit(statement);
+        scope = scope.getParent();
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Switch ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        Environment.Type conditionType = ast.getCondition().getType();
+        for (Ast.Statement.Case currCase : ast.getCases()){
+            visit(currCase);
+            if (currCase.equals(ast.getCases().getLast()) && currCase.getValue().isPresent())   // Default with condition
+                throw new RuntimeException("Unexpected condition in Default case");
+            if (currCase.equals(ast.getCases().getLast()))                                      // Successful default
+                continue;
+            if (currCase.getValue().isEmpty())                                                  // Invalid Case
+                throw new RuntimeException("Expected condition in case expression");
+            visit(currCase.getValue().get());
+            requireAssignable(conditionType, currCase.getValue().get().getType());              // Require matching type in Case
+        }
+
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Case ast) {
-        throw new UnsupportedOperationException();  // TODO
+        scope = new Scope(scope);
+        for (Ast.Statement statement : ast.getStatements())
+            visit (statement);
+        scope = scope.getParent();
+        return null;
     }
 
     // Done in class
@@ -276,7 +313,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
             visit(ast.getArguments().get(i));
             requireAssignable(function.getParameterTypes().get(i), ast.getArguments().get(i).getType());
         }
-        ast.setFunction(new Environment.Function(ast.getName(), ast.getName(), function.getParameterTypes(), function.getReturnType(), args->  Environment.NIL ));
+        ast.setFunction(new Environment.Function(ast.getName(), function.getJvmName(), function.getParameterTypes(), function.getReturnType(), args->  Environment.NIL ));
         return null;
     }
 
