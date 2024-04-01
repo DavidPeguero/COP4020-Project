@@ -131,7 +131,44 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException();  // TODO
+        switch (ast.getOperator()){
+            case "||":
+            case "&&":
+                requireAssignable(Environment.Type.BOOLEAN, ast.getLeft().getType());
+                requireAssignable(Environment.Type.BOOLEAN, ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+                break;
+            case "<":
+            case ">":
+            case "==":
+            case "!=":
+                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
+                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
+                requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
+                ast.setType(Environment.Type.BOOLEAN);
+                break;
+            case "+":
+                if (ast.getLeft().getType().equals(Environment.Type.STRING) || ast.getRight().getType().equals(Environment.Type.STRING)){
+                    ast.setType(Environment.Type.STRING);
+                    break;
+                }
+            case "-":
+            case "*":
+            case "/":
+                if (ast.getLeft().getType().equals(Environment.Type.DECIMAL)){
+                    requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
+                    ast.setType(ast.getLeft().getType());
+                    break;
+                }
+            case "^":
+                if (ast.getLeft().getType().equals(Environment.Type.INTEGER)){
+                    requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
+                    ast.setType(ast.getLeft().getType());
+                    break;
+                }
+                throw new RuntimeException("Invalid type for Binary Expression");
+        }
+        return null;
     }
 
     @Override
