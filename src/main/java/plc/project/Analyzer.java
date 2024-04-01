@@ -188,44 +188,53 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Group ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (!(ast.getExpression() instanceof Ast.Expression.Binary))
+            throw new RuntimeException("Group Expression must contain a binary expression");
+
+        visit(ast.getExpression());
+        ast.setType(ast.getExpression().getType());
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
+        visit(ast.getLeft());
+        visit(ast.getRight());
+        Environment.Type LHS = ast.getLeft().getType();
+        Environment.Type RHS = ast.getRight().getType();
         switch (ast.getOperator()){
             case "||":
             case "&&":
-                requireAssignable(Environment.Type.BOOLEAN, ast.getLeft().getType());
-                requireAssignable(Environment.Type.BOOLEAN, ast.getRight().getType());
+                requireAssignable(LHS, Environment.Type.BOOLEAN);
+                requireAssignable(RHS, Environment.Type.BOOLEAN);
                 ast.setType(Environment.Type.BOOLEAN);
                 break;
             case "<":
             case ">":
             case "==":
             case "!=":
-                requireAssignable(Environment.Type.COMPARABLE, ast.getLeft().getType());
-                requireAssignable(Environment.Type.COMPARABLE, ast.getRight().getType());
-                requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
+                requireAssignable(LHS, Environment.Type.COMPARABLE);
+                requireAssignable(RHS, Environment.Type.COMPARABLE);
+                requireAssignable(RHS, LHS);
                 ast.setType(Environment.Type.BOOLEAN);
                 break;
             case "+":
-                if (ast.getLeft().getType().equals(Environment.Type.STRING) || ast.getRight().getType().equals(Environment.Type.STRING)){
+                if (LHS.equals(Environment.Type.STRING) || RHS.equals(Environment.Type.STRING)){
                     ast.setType(Environment.Type.STRING);
                     break;
                 }
             case "-":
             case "*":
             case "/":
-                if (ast.getLeft().getType().equals(Environment.Type.DECIMAL)){
-                    requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
-                    ast.setType(ast.getLeft().getType());
+                if (LHS.equals(Environment.Type.DECIMAL)){
+                    requireAssignable(RHS, LHS);
+                    ast.setType(LHS);
                     break;
                 }
             case "^":
-                if (ast.getLeft().getType().equals(Environment.Type.INTEGER)){
-                    requireAssignable(ast.getLeft().getType(), ast.getRight().getType());
-                    ast.setType(ast.getLeft().getType());
+                if (LHS.equals(Environment.Type.INTEGER)){
+                    requireAssignable(RHS, LHS);
+                    ast.setType(LHS);
                     break;
                 }
                 throw new RuntimeException("Invalid type for Binary Expression");
