@@ -103,14 +103,26 @@ public final class Analyzer implements Ast.Visitor<Void> {
         throw new UnsupportedOperationException();  // TODO
     }
 
+    // Done in class
     @Override
     public Void visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+        try{
+            scope = new Scope(scope);
+            for (Ast.Statement stmt : ast.getStatements()){
+                visit((stmt));
+            }
+        } finally {
+            scope = scope.getParent();
+        }
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Return ast) {
-        throw new UnsupportedOperationException();  // TODO
+        requireAssignable(function.getFunction().getReturnType(), ast.getValue().getType());
+        return null;
     }
 
     // TODO: Test this
@@ -187,8 +199,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        if (!target.equals(type))
-            throw new RuntimeException("Assignable target does not match type");
+        if (!target.equals(type)) throw new RuntimeException("Assignable target does not match type");
     }
 
 }
