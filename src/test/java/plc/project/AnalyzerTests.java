@@ -186,6 +186,7 @@ public final class AnalyzerTests {
         );
     }
 
+
     @ParameterizedTest(name = "{0}")
     @MethodSource
     public void testAssignmentStatement(String test, Ast.Statement.Assignment ast, Ast.Statement.Assignment expected) {

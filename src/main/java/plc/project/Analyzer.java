@@ -2,9 +2,10 @@ package plc.project;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * See the specification for information about what the different visit
@@ -43,7 +44,24 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+        List<Environment.Type> parameterTypes = new ArrayList<>();
+        ast.getParameterTypeNames().forEach(typeName -> {
+            parameterTypes.add(Environment.getType(typeName));
+        });
+        Environment.Type retType = Environment.Type.NIL;
+        if(ast.getReturnTypeName().isPresent())
+            retType = Environment.getType(ast.getReturnTypeName().get());
+        scope.defineFunction(ast.getName(), ast.getName(), parameterTypes, retType, args -> Environment.NIL);
+        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getParameters().size()));
+        scope = new Scope(scope);
+        scope.defineVariable("retType", true, Environment.create(retType));
+        ast.getParameters().forEach(parameter -> {
+            scope.defineVariable(parameter, true, Environment.NIL);
+        });
+        ast.getStatements().forEach(this::visit);
+        scope = scope.getParent();
+
+        return null;
     }
 
     @Override
@@ -183,7 +201,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Return ast) {
-        requireAssignable(function.getFunction().getReturnType(), ast.getValue().getType());
+        visit(ast.getValue());
+        requireAssignable((Environment.Type)(scope.lookupVariable("retType").getValue().getValue()), ast.getValue().getType());
         return null;
     }
 
