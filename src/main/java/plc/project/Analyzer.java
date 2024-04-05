@@ -34,11 +34,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     * Returns null.
     */
     public Void visit(Ast.Source ast) {
-        for (Ast.Global global : ast.getGlobals())
-            visit(global);
-
-        for (Ast.Function function : ast.getFunctions())
-            visit(function);
+        ast.getGlobals().forEach(this::visit);
+        ast.getFunctions().forEach(this::visit);
 
         if(!scope.lookupFunction("main", 0).getReturnType().equals(Environment.Type.INTEGER))
             throw new RuntimeException("Main does not have an Integer return type");
@@ -195,7 +192,6 @@ public final class Analyzer implements Ast.Visitor<Void> {
             visit(currCase.getValue().get());
             requireAssignable(conditionType, currCase.getValue().get().getType());              // Require matching type in Case
         }
-
         return null;
     }
 
@@ -212,9 +208,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
         try{
             scope = new Scope(scope);
-            for (Ast.Statement stmt : ast.getStatements()){
-                visit((stmt));
-            }
+            ast.getStatements().forEach(this::visit);
         } finally {
             scope = scope.getParent();
         }
@@ -356,8 +350,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     public Void visit(List<Ast.Statement> statements){
         scope = new Scope(scope);
-        for (Ast.Statement statement: statements)
-            visit(statement);
+        statements.forEach(this::visit);
         scope = scope.getParent();
 
         return null;
