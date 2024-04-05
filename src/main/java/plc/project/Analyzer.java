@@ -47,7 +47,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Global ast) {
         if(ast.getValue().isPresent()) {
             visit(ast.getValue().get());
-            requireAssignable(Environment.getType(ast.getTypeName()), ast.getValue().get().getType());
+            if(ast.getValue().get() instanceof  Ast.Expression.PlcList){
+                ((Ast.Expression.PlcList) ast.getValue().get()).getValues().forEach(expression -> {
+                   requireAssignable(Environment.getType(ast.getTypeName()), expression.getType());
+                });
+            }
+            else
+                requireAssignable(Environment.getType(ast.getTypeName()), ast.getValue().get().getType());
         }
         scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), ast.getMutable(), Environment.NIL);
         ast.setVariable(scope.lookupVariable(ast.getName()));
@@ -338,7 +344,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.PlcList ast) {
-        throw new UnsupportedOperationException();  // TODO
+        ast.getValues().forEach(this::visit);
+        return null;
     }
 
     public Void visit(List<Ast.Statement> statements){
