@@ -413,7 +413,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 if (LHS == null || RHS == null)
                     throw new RuntimeException("Division with null value");
 
-                if (RHS.toString().equals("0") || RHS.toString().equals("0.0"))
+                if (RHS.getValue().equals(BigInteger.ZERO) || RHS.getValue().equals(BigDecimal.ZERO))
                     throw new RuntimeException("Divide by Zero");
 
                 if (LHS.getValue() instanceof BigDecimal && RHS.getValue() instanceof BigDecimal)
