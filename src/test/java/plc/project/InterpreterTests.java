@@ -82,7 +82,7 @@ final class InterpreterTests {
                                                             Arrays.asList(new Ast.Expression.Literal(BigInteger.valueOf(5)))))
                                     ))
                                 )
-                        ), BigInteger.TEN
+                        ), BigInteger.valueOf(8)
                 )
         );
     }

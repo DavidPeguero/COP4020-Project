@@ -13,6 +13,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     private Scope scope = new Scope(null);
 
+
     public Interpreter(Scope parent) {
         scope = new Scope(parent);
         scope.defineFunction("print", 1, args -> {
@@ -73,23 +74,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
      */
     @Override
     public Environment.PlcObject visit(Ast.Function ast) {
-
+        Scope functionScope = new Scope(scope);
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
             try{
-                scope = new Scope(scope);
+                scope = functionScope;
                 List<String> parameter = ast.getParameters();
                 for(int i = 0; i <ast.getParameters().size(); i++){
                     scope.defineVariable(parameter.get(i), true, Environment.create(args.get(i).getValue()));
-                    System.out.println(scope.lookupVariable(parameter.get(i)));
                 }
                 ast.getStatements().forEach(this::visit);
             }
             catch (Return e){
-                scope = scope.getParent();
+                scope = functionScope.getParent();
                 return e.value;
             }
             finally {
-                scope = scope.getParent();
+                scope = functionScope.getParent();
             }
             return Environment.NIL;
         });
@@ -276,7 +276,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                                     return Environment.create(Boolean.FALSE);
                             }
                         }else if(LHS.getValue() instanceof BigDecimal){
-                            int compareResult = requireType(BigInteger.class, LHS).compareTo(requireType(BigInteger.class, RHS));
+                            int compareResult = requireType(BigDecimal.class, LHS).compareTo(requireType(BigDecimal.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -295,6 +295,16 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                             }
                         } else if(LHS.getValue() instanceof Character){
                             int compareResult = requireType(Character.class, LHS).compareTo(requireType(Character.class, RHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        }
+                        else if(LHS.getValue() instanceof String){
+                            int compareResult = requireType(String.class, LHS).compareTo(requireType(String.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -338,6 +348,15 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                             }
                         }else if(LHS.getValue() instanceof Character){
                             int compareResult = requireType(Character.class, LHS).compareTo(requireType(Character.class, RHS));
+                            switch (compareResult){
+                                case -1:
+                                    return Environment.create(Boolean.TRUE);
+                                case 0:
+                                case 1:
+                                    return Environment.create(Boolean.FALSE);
+                            }
+                        }else if(LHS.getValue() instanceof String){
+                            int compareResult = requireType(String.class, LHS).compareTo(requireType(String.class, RHS));
                             switch (compareResult){
                                 case -1:
                                     return Environment.create(Boolean.TRUE);
@@ -454,7 +473,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             });
             returnVal = function.invoke(arguments);
         }
-
         return returnVal;
     }
 
