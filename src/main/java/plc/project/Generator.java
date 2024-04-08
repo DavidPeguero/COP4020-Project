@@ -1,6 +1,7 @@
 package plc.project;
 
 import java.io.PrintWriter;
+import java.util.List;
 
 public final class Generator implements Ast.Visitor<Void> {
 
@@ -26,6 +27,18 @@ public final class Generator implements Ast.Visitor<Void> {
         for (int i = 0; i < indent; i++) {
             writer.write("    ");
         }
+    }
+
+    // Print items in list
+    private Void printList(List<Ast.Expression> expressionList){
+        if (expressionList.isEmpty())
+            return null;
+        print(expressionList.getFirst());
+        for (int i = 1; i < expressionList.size(); i++){
+            print(", ");
+            print(expressionList.get(i).toString());
+        }
+        return null;
     }
 
     @Override
@@ -95,22 +108,36 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print(ast.getVariable().getJvmName());
+
+        if (ast.getOffset().isPresent()){
+            print("[");
+            visit(ast.getOffset().get());
+            print("]");
+        }
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print(ast.getFunction().getJvmName());
+        print("(");
+        printList(ast.getArguments());
+        print(")");
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.PlcList ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("{");
+        printList(ast.getValues());
+        print("}");
+        return null;
     }
 
 }
