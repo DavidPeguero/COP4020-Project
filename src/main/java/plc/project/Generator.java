@@ -61,7 +61,9 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getExpression());
+        print(";");
+        return null;
     }
 
     @Override
@@ -71,7 +73,11 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getReceiver());
+        print(" = ");
+        visit(ast.getValue());
+        print(";");
+        return null;
     }
 
     @Override
@@ -81,17 +87,64 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Switch ast) {
-        throw new UnsupportedOperationException(); //TODO
+        indent++;
+        print("switch (");
+        visit(ast.getCondition());
+        print(") {");
+
+        ast.getCases().forEach(aCase -> {
+            newline(indent);
+            visit(aCase);
+            }
+        );
+        newline(--indent);
+        print("}");
+        return null;
     }
 
     @Override
     public Void visit(Ast.Statement.Case ast) {
-        throw new UnsupportedOperationException(); //TODO
+        indent++;
+        if (ast.getValue().isPresent()) {
+            print("case ");
+            visit(ast.getValue().get());
+            print(":");
+            ast.getStatements().forEach(statement -> {
+                newline(indent);
+                visit(statement);
+                }
+            );
+
+            newline(indent);
+            print("break;");
+        } else{
+            print("default:");
+            ast.getStatements().forEach(statement -> {
+                newline(indent);
+                visit(statement);
+                }
+            );
+        }
+
+        indent--;
+        return null;
     }
 
+    // Nothing actually tests this function
+    // Check lectures to see how professor implemented this
     @Override
     public Void visit(Ast.Statement.While ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("while (");
+        visit(ast.getCondition());
+        print(") {");
+        indent++;
+        ast.getStatements().forEach(statement -> {newline(indent);
+            visit(statement);
+            }
+        );
+        print("}");
+        indent--;
+        return null;
     }
 
     @Override
