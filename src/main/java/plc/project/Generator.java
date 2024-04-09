@@ -1,6 +1,9 @@
 package plc.project;
 
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 
 public final class Generator implements Ast.Visitor<Void> {
@@ -98,16 +101,45 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expression.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+        switch(ast.getLiteral()){
+            case String s :
+                print("\"");
+                print(s);
+                print("\"");
+                break;
+            case Character c:
+                print("'");
+                print(c);
+                print("'");
+                break;
+            default: // Should print boolean or int or BigDecimal
+                print(ast.getLiteral());
+        }
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("(");
+        visit(ast.getExpression());
+        print(")");
+        return null;
     }
 
     @Override
     public Void visit(Ast.Expression.Binary ast) {
+        if (ast.getOperator().equals("^")){
+            print("Math.pow(");
+            printList(Arrays.asList(ast.getLeft(), ast.getRight()));
+            print(")");
+        }
+        else{
+            visit(ast.getLeft());
+            print(" ");
+            print(ast.getOperator());
+            print(" ");
+            visit(ast.getRight());
+        }
         return null;
     }
 
