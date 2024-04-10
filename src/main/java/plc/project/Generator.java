@@ -33,15 +33,33 @@ public final class Generator implements Ast.Visitor<Void> {
     }
 
     // Print items in list
-    private Void printList(List<Ast.Expression> expressionList){
+    private void printList(List<Ast.Expression> expressionList){
         if (expressionList.isEmpty())
-            return null;
+            return;
         print(expressionList.getFirst());
         for (int i = 1; i < expressionList.size(); i++){
             print(", ");
             print(expressionList.get(i).toString());
         }
-        return null;
+        return;
+    }
+
+    private void printStatements(List<Ast.Statement> statementsList){
+        statementsList.forEach(statement -> {
+                newline(indent);
+                visit(statement);
+            }
+        );
+    }
+
+    // Structurally the same as printStatements but due to type
+    // differences must be done in a separate function
+    private void printCases(List<Ast.Statement.Case> cases) {
+        cases.forEach(aCase -> {
+                newline(indent);
+                visit(aCase);
+            }
+        );
     }
 
     @Override
@@ -87,16 +105,12 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Switch ast) {
-        indent++;
         print("switch (");
         visit(ast.getCondition());
         print(") {");
 
-        ast.getCases().forEach(aCase -> {
-            newline(indent);
-            visit(aCase);
-            }
-        );
+        indent++;
+        printCases(ast.getCases());
         newline(--indent);
         print("}");
         return null;
@@ -109,21 +123,12 @@ public final class Generator implements Ast.Visitor<Void> {
             print("case ");
             visit(ast.getValue().get());
             print(":");
-            ast.getStatements().forEach(statement -> {
-                newline(indent);
-                visit(statement);
-                }
-            );
-
+            printStatements(ast.getStatements());
             newline(indent);
             print("break;");
         } else{
             print("default:");
-            ast.getStatements().forEach(statement -> {
-                newline(indent);
-                visit(statement);
-                }
-            );
+            printStatements(ast.getStatements());
         }
 
         indent--;
@@ -138,10 +143,7 @@ public final class Generator implements Ast.Visitor<Void> {
         visit(ast.getCondition());
         print(") {");
         indent++;
-        ast.getStatements().forEach(statement -> {newline(indent);
-            visit(statement);
-            }
-        );
+        printStatements(ast.getStatements());
         print("}");
         indent--;
         return null;
@@ -167,6 +169,9 @@ public final class Generator implements Ast.Visitor<Void> {
                 print("'");
                 print(c);
                 print("'");
+                break;
+            case null:
+                print("null");
                 break;
             default: // Should print boolean or int or BigDecimal
                 print(ast.getLiteral());
