@@ -1,0 +1,6 @@
+VAL name: String = "Sample";
+
+FUN main(): Integer DO
+    print("Hello " + name);
+    RETURN 0;
+END
