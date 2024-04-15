@@ -1,0 +1,4 @@
+FUN main(): Integer DO
+    print("2 * 10 = " + (2 * 10) );
+    RETURN 0;
+END
