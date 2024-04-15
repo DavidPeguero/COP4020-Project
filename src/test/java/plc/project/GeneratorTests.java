@@ -17,6 +17,31 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+/*
+ * GeneratorTests (18/31):
+ *      Source (0/2):
+ *          Hello World: Unexpected java.lang.UnsupportedOperationException (null)
+ *          Multiple Globals & Functions: Unexpected java.lang.UnsupportedOperationException (null)
+ *      Global (0/4):
+ *          Mutable Declaration: Unexpected java.lang.UnsupportedOperationException (null)
+ *          List Initialization: Unexpected java.lang.UnsupportedOperationException (null)
+ *          Mutable Initialization: Unexpected java.lang.UnsupportedOperationException (null)
+ *          Immutable Initialization: Unexpected java.lang.UnsupportedOperationException (null)
+ *      Function (0/2):
+ *          Square: Unexpected java.lang.UnsupportedOperationException (null)
+ *          Multiple Statements: Unexpected java.lang.UnsupportedOperationException (null)
+ *      Statement (5/10):
+ *          Declaration (0/2):
+ *              Variable Declaration: Unexpected java.lang.UnsupportedOperationException (null)
+ *              Variable Initialization: Unexpected java.lang.UnsupportedOperationException (null)
+ *          If (0/2):
+ *              If: Unexpected java.lang.UnsupportedOperationException (null)
+ *              Else: Unexpected java.lang.UnsupportedOperationException (null)
+ *          While (1/2):
+ *              Multiple Statements: Incorrect result, received while (num < 10) { System.out.println(num + " "); num = num + 1;}
+ */
+
+
 public class GeneratorTests {
 
     @ParameterizedTest(name = "{0}")
