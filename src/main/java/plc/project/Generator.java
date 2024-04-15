@@ -51,12 +51,43 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Global ast) {
-        throw new UnsupportedOperationException(); //TODO
+        if(ast.getMutable()){
+            if(ast.getValue().isPresent() && ast.getValue().get() instanceof Ast.Expression.PlcList) {
+                print(ast.getVariable().getJvmName() + "[] " + ast.getName() + " = {");
+                visit(ast.getValue().get());
+                print("};");
+            }
+            print(ast.getVariable().getJvmName() + " " + ast.getName());
+            if(ast.getValue().isPresent()) {
+                print(" = ");
+                visit(ast.getValue().get());
+            }
+            print(";");
+        } else{
+            print("final" + ast.getVariable().getJvmName() + " " + ast.getName() + " = ");
+            visit(ast.getValue().get());
+            print(";");
+        }
+        return null;
     }
 
     @Override
     public Void visit(Ast.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print(ast.getFunction().getReturnType().getJvmName() + " " + ast.getName() + "(");
+        List<Environment.Type> pTypes = ast.getFunction().getParameterTypes();
+        List<String> parameters = ast.getParameters();
+        for(int i = 0; i < parameters.size() - 1; i++){
+            print(pTypes.get(i) + " " + parameters.get(i) + " ");
+        }
+        print(pTypes.getLast()+ " " + parameters.getLast() + " {");
+        print();
+        indent++;
+        newline(indent);
+        ast.getStatements().forEach(this::visit);
+        indent--;
+        newline(indent);
+        print("}");
+        return null;
     }
 
     @Override
