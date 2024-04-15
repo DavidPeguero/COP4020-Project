@@ -47,7 +47,7 @@ public final class Generator implements Ast.Visitor<Void> {
     private void printStatements(List<Ast.Statement> statementsList){
         statementsList.forEach(statement -> {
                 newline(indent);
-                visit(statement);
+                print(statement);
             }
         );
     }
@@ -57,7 +57,7 @@ public final class Generator implements Ast.Visitor<Void> {
     private void printCases(List<Ast.Statement.Case> cases) {
         cases.forEach(aCase -> {
                 newline(indent);
-                visit(aCase);
+                print(aCase);
             }
         );
     }
@@ -79,7 +79,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Expression ast) {
-        visit(ast.getExpression());
+        print(ast.getExpression());
         print(";");
         return null;
     }
@@ -91,9 +91,9 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Statement.Assignment ast) {
-        visit(ast.getReceiver());
+        print(ast.getReceiver());
         print(" = ");
-        visit(ast.getValue());
+        print(ast.getValue());
         print(";");
         return null;
     }
@@ -106,7 +106,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Switch ast) {
         print("switch (");
-        visit(ast.getCondition());
+        print(ast.getCondition());
         print(") {");
 
         indent++;
@@ -121,7 +121,7 @@ public final class Generator implements Ast.Visitor<Void> {
         indent++;
         if (ast.getValue().isPresent()) {
             print("case ");
-            visit(ast.getValue().get());
+            print(ast.getValue().get());
             print(":");
             printStatements(ast.getStatements());
             newline(indent);
@@ -140,7 +140,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.While ast) {
         print("while (");
-        visit(ast.getCondition());
+        print(ast.getCondition());
         print(") {");
 
         // Print inner statements on new scope
@@ -159,7 +159,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Statement.Return ast) {
         print("return ");
-        visit(ast.getValue());
+        print(ast.getValue());
         print(";");
         return null;
     }
@@ -189,7 +189,7 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Expression.Group ast) {
         print("(");
-        visit(ast.getExpression());
+        print(ast.getExpression());
         print(")");
         return null;
     }
@@ -202,11 +202,11 @@ public final class Generator implements Ast.Visitor<Void> {
             print(")");
         }
         else{
-            visit(ast.getLeft());
+            print(ast.getLeft());
             print(" ");
             print(ast.getOperator());
             print(" ");
-            visit(ast.getRight());
+            print(ast.getRight());
         }
         return null;
     }
@@ -217,7 +217,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
         if (ast.getOffset().isPresent()){
             print("[");
-            visit(ast.getOffset().get());
+            print(ast.getOffset().get());
             print("]");
         }
         return null;
