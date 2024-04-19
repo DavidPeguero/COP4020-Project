@@ -230,14 +230,15 @@ public final class Generator implements Ast.Visitor<Void> {
         print(ast.getCondition());
         print(") {");
 
+        if (ast.getStatements().isEmpty()) {
+            print("}");
+            return null;
+        }
+
         // Print inner statements on new scope
         indent++;
         printStatements(ast.getStatements());
-        indent--;
-
-        // print closing bracket
-        if (ast.getStatements().isEmpty())
-            newline(indent);
+        newline(--indent);
         print("}");
 
         return null;
