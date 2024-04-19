@@ -76,8 +76,15 @@ public final class Generator implements Ast.Visitor<Void> {
         indent--;
         newline(indent);
         print("}");
-        ast.getFunctions().forEach(this::print);
+        newline(0);
+        newline(indent);
+        //Possible we need to add a newLine after each function
+        ast.getFunctions().forEach(func -> {
+            visit(func);
+        });
         indent--;
+        newline(0);
+        newline(indent);
         print("}");
 
         return null;
@@ -112,14 +119,21 @@ public final class Generator implements Ast.Visitor<Void> {
         for(int i = 0; i < parameters.size() - 1; i++){
             print(pTypes.get(i) + " " + parameters.get(i) + " ");
         }
-        print(pTypes.getLast()+ " " + parameters.getLast() + " {");
-        print();
+        if(!pTypes.isEmpty())
+            print(pTypes.getLast()+ " " + parameters.getLast() + " {");
+        print(") {");
         indent++;
         newline(indent);
-        ast.getStatements().forEach(this::visit);
+        for(int i = 0; i < ast.getStatements().size(); i++){
+            visit(ast.getStatements().get(i));
+            if(i != ast.getStatements().size() - 1){
+                newline(indent);
+            }
+        }
         indent--;
         newline(indent);
         print("}");
+
         return null;
     }
 
@@ -135,6 +149,7 @@ public final class Generator implements Ast.Visitor<Void> {
         if(ast.getValue().isPresent()) {
             print(ast.getVariable().getType().getJvmName() + " " + ast.getName() + " = ");
             print(ast.getValue().get());
+            print(";");
         }else{
             print(ast.getVariable().getType().getJvmName() + " " + ast.getName() + ";");
         }
