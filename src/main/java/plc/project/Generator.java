@@ -39,7 +39,7 @@ public final class Generator implements Ast.Visitor<Void> {
         print(expressionList.getFirst());
         for (int i = 1; i < expressionList.size(); i++){
             print(", ");
-            print(expressionList.get(i).toString());
+            print(expressionList.get(i));
         }
         return;
     }
@@ -79,9 +79,12 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(0);
         newline(indent);
         //Possible we need to add a newLine after each function
-        ast.getFunctions().forEach(func -> {
-            visit(func);
-        });
+        for(int i = 0; i < ast.getFunctions().size(); i++){
+            visit(ast.getFunctions().get(i));
+            if(i != ast.getFunctions().size() - 1){
+                newline(indent);
+            }
+        }
         indent--;
         newline(0);
         newline(indent);
@@ -94,11 +97,11 @@ public final class Generator implements Ast.Visitor<Void> {
     public Void visit(Ast.Global ast) {
         if(ast.getMutable()){
             if(ast.getValue().isPresent() && ast.getValue().get() instanceof Ast.Expression.PlcList) {
-                print(ast.getVariable().getType().getJvmName() + "[] " + ast.getName() + " = {",
-                        ast.getValue().get(), ast.getValue(),
-                        "};");
+                print(ast.getVariable().getType().getJvmName() + "[] " + ast.getName() + " = ",
+                        ast.getValue().get(),
+                        ";");
             }
-            if(ast.getValue().isPresent()) {
+            else if(ast.getValue().isPresent()) {
                 print(ast.getVariable().getType().getJvmName() + " " + ast.getName() + " = " , ast.getValue().get(), ";");
             } else{
                 print(ast.getVariable().getType().getJvmName() + " " + ast.getName() + ";");
