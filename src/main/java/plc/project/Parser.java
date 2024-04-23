@@ -64,26 +64,13 @@ public final class Parser {
      * @return String typeName
      */
     private String parseType() throws ParseException{
-        String typeName = null;
-        if (match(":")){
-           if (!peek(Token.Type.IDENTIFIER))
-               handleError("Expected Type");
+        if (!match(":"))
+            return null;
 
-           switch (tokens.get(0).getLiteral()){
-               case "Boolean":
-               case "Character":
-               case "Decimal":
-               case "Integer":
-               case "String":
-               case "Type":
-                   typeName = tokens.get(0).getLiteral();
-                   tokens.advance();
-                   break;
-               default:
-                   handleError("Nonexistent Type");
-           }
-        }
-        return typeName;
+        if (!match(Token.Type.IDENTIFIER))
+           handleError("Expected Type");
+
+        return tokens.get(-1).getLiteral();
     }
 
     public Parser(List<Token> tokens) {
