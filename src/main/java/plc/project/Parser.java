@@ -59,6 +59,33 @@ public final class Parser {
 
     private final TokenStream tokens;
 
+    /**
+     * Parses type. Returns null if type does not exist or literal.
+     * @return String typeName
+     */
+    private String parseType() throws ParseException{
+        String typeName = null;
+        if (match(":")){
+           if (!peek(Token.Type.IDENTIFIER))
+               handleError("Expected Type");
+
+           switch (tokens.get(0).getLiteral()){
+               case "Boolean":
+               case "Character":
+               case "Decimal":
+               case "Integer":
+               case "String":
+               case "Type":
+                   typeName = tokens.get(0).getLiteral();
+                   tokens.advance();
+                   break;
+               default:
+                   handleError("Nonexistent Type");
+           }
+        }
+        return typeName;
+    }
+
     public Parser(List<Token> tokens) {
         this.tokens = new TokenStream(tokens);
     }
@@ -118,15 +145,26 @@ public final class Parser {
 
     }
 
+    // TODO: No test in ParserModifiedTests.java for Global List
     /**
      * Parses the {@code list} rule. This method should only be called if the
      * next token declares a list, aka {@code LIST}.
      */
     public Ast.Global parseList() throws ParseException {
+        if (!peek(Token.Type.IDENTIFIER))
+            handleError("Expected Identifier for List");
+
+        // Get Identifier
         String id = tokens.get(0).getLiteral();
         Ast.Global newGlobal = null;
         List<Ast.Expression> expressions = new ArrayList<>();
         tokens.advance();
+
+        // Parse Type
+        String typeName = parseType();
+        if (typeName == null)
+            handleError("Expected ':'");
+
         if(match("=", "[")){
             //Parse Exception
             expressions.add(parseExpression());
@@ -135,7 +173,7 @@ public final class Parser {
             }
             if(match("]")){
                 Ast.Expression list = new Ast.Expression.PlcList(expressions);
-                newGlobal = new Ast.Global(id, true, Optional.of(list));
+                newGlobal = new Ast.Global(id, typeName, true, Optional.of(list));
             }
         }
         return newGlobal;
@@ -146,22 +184,24 @@ public final class Parser {
      * next token declares a mutable global variable, aka {@code VAR}.
      */
     public Ast.Global parseMutable() throws ParseException {
+        if (!peek(Token.Type.IDENTIFIER))
+            handleError("Expected Identifier for Mutable");
+
         String id;
-        Ast.Global newGlobal = null;
-        if(peek(Token.Type.IDENTIFIER)){
-            id = tokens.get(0).getLiteral();
-            tokens.advance();
-            if(match("=")){
-                newGlobal = new Ast.Global(id, true, Optional.of(parseExpression()));
-                return newGlobal;
-            }
-            else{
-                newGlobal = new Ast.Global(id, true, Optional.empty());
-                return newGlobal;
-            }
-        } else {
-            handleError("Expected Identifier");
-        }
+        Ast.Global newGlobal;
+        id = tokens.get(0).getLiteral();
+        tokens.advance();
+
+        // Parse Type
+        String typeName = parseType();
+        if (typeName == null)
+            handleError("Expected ':'");
+
+        if(match("="))
+            newGlobal = new Ast.Global(id, typeName,true, Optional.of(parseExpression()));
+        else
+            newGlobal = new Ast.Global(id, typeName, true, Optional.empty());
+
         return newGlobal;
     }
 
@@ -170,22 +210,22 @@ public final class Parser {
      * next token declares an immutable global variable, aka {@code VAL}.
      */
     public Ast.Global parseImmutable() throws ParseException {
+        if (!peek(Token.Type.IDENTIFIER))
+            handleError("Expected Identifier for Immutable");
+
         String id;
-        Ast.Global newGlobal = null;
-        if(peek(Token.Type.IDENTIFIER)){
-            id = tokens.get(0).getLiteral();
-            tokens.advance();
-            if(match("=")){
-                newGlobal = new Ast.Global(id, false, Optional.of(parseExpression()));
-                return newGlobal;
-            }
-            else{
-                handleError("Expected '=' symbol");
-            }
-        } else {
-            handleError("Expected 'IDENTIFIER' type token ");
-        }
-        return newGlobal;
+        id = tokens.get(0).getLiteral();
+        tokens.advance();
+
+        // Parse Type
+        String typeName = parseType();
+        if (typeName == null)
+            handleError("Expected ':'");
+
+        if(!match("="))
+            handleError("Expected '=' symbol");
+
+        return new Ast.Global(id, typeName,false, Optional.of(parseExpression()));
     }
 
     /**
@@ -193,65 +233,47 @@ public final class Parser {
      * next tokens start a method, aka {@code FUN}.
      */
     public Ast.Function parseFunction() throws ParseException {
-        String id;
-        Ast.Function newFunction = null;
-        List<String> parameters = new ArrayList<>();
-        if(tokens.has(0) && match("FUN")){
-            if(peek(Token.Type.IDENTIFIER)){
-                id = tokens.get(0).getLiteral();
-                tokens.advance();
-                if(tokens.has(0) && peek(Token.Type.OPERATOR) && peek("(")) {
-                    match("(");
-                    //Empty parameter list
-                    if (peek(Token.Type.OPERATOR) && peek(")")) {
-                        if(!match(")")){
-                            handleError("Expect ')' operator");
-                        }
-                        if(match("DO")){
-                            List<Ast.Statement> block = parseBlock();
-                            if(match("END")){
-                                newFunction = new Ast.Function(id, parameters,block);
-                            }
-                            else{
-                                handleError("Expect 'END' keyword");
-                            }
-                        }
-                    } else { //Check for Identifier if not an empty parameter list
-                        if(peek(Token.Type.IDENTIFIER)){
-                            parameters.add(tokens.get(0).getLiteral());
-                        }
-                        //While we find comma indicating more parameters
-                        while (peek(Token.Type.OPERATOR) && match(",")) {
-                            if(peek(Token.Type.IDENTIFIER)){
-                                parameters.add(tokens.get(0).getLiteral());
-                            }
-                            else{
-                                handleError("Expected Token Type 'IDENTIFIER'");
-                            }
-                            //Add parameters to list
-                        }
-                        if (!match(")")) { //No matching right parentheses
-                            handleError("Expected ')' operator");
-                        } else { //Otherwise return the function and the parameters added
-                            if(match("DO")){
-                                List<Ast.Statement> block = parseBlock();
-                                if(match("END")){
-                                    newFunction = new Ast.Function(id, parameters, block);
-                                }
-                                else{
-                                    handleError("Expected 'END' keyword");
-                                }
-                            }
-                            else{
-                                handleError("Expected 'DO' keyword");
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        tokens.advance();
 
-        return newFunction;
+        // Get the function identifier
+        if (!match(Token.Type.IDENTIFIER))
+            handleError("Expected function identifier");
+        String id = tokens.get(-1).getLiteral();
+
+        // Enter parameter list
+        if(!match("("))
+            handleError("Expected opening parenthesis for parameter list");
+
+        List<String> parameterNames = new ArrayList<>();
+        List<String> parameterTypes = new ArrayList<>();
+        while (!match(")")){
+            if (!match(Token.Type.IDENTIFIER))
+                handleError("Expected Parameter Identifier");
+            parameterNames.add(tokens.get(-1).getLiteral());
+
+            String type = parseType();
+            if (type == null)
+                handleError("Expected Type for Parameter");
+            parameterTypes.add(type);
+
+            if (!peek(")") && !match(","))
+                handleError("Expected ',' in parameter list");
+        }
+        // Exit Parameter list
+
+        // Get return type
+        Optional<String> retType = Optional.ofNullable(parseType());
+
+        // Enter block statements
+        if (!match("DO"))
+            handleError("DO keyword expected for function");
+        List<Ast.Statement> block = parseBlock();
+
+        if (!match("END"))
+            handleError("Expect 'END' keyword");
+        // Exit block statements
+
+        return new Ast.Function(id, parameterNames, parameterTypes, retType, block);
     }
 
     /**
@@ -330,25 +352,22 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Statement.Declaration parseDeclarationStatement() throws ParseException {
-        // 'Let' identifier (= expression)? ;
         match("LET");
         if (!match(Token.Type.IDENTIFIER))
             handleError("Expected identifier in declaration");
-
-        // Get identifier literal string name
         String name = tokens.get(-1).getLiteral();
 
-        // Optional type that contains an Ast.Expression
-        Optional<Ast.Expression> value = Optional.empty();
+        // Will be Optional.empty() if returned null
+        Optional<String> typeName = Optional.ofNullable(parseType());
 
-        // Creates an Optional<Ast.Expression> object
-        if (match("=")){
-            value = Optional.of(parseExpression());
-        }
+        // Optional type that contains an Ast.Expression
+        Optional<Ast.Expression> value = match("=") ?
+                        Optional.of(parseExpression()) : Optional.empty();
 
         if (!match(";"))
             handleError("Expected ';' in declaration");
-        return new Ast.Statement.Declaration(name, value);
+
+        return new Ast.Statement.Declaration(name, typeName, value);
     }
 
     /**
@@ -384,8 +403,6 @@ public final class Parser {
      * should only be called if the next tokens start a switch statement, aka
      * {@code SWITCH}.
      */
-
-    // TODO: Develop unit tests for this
     public Ast.Statement.Switch parseSwitchStatement() throws ParseException {
         // 'SWITCH' expression ('CASE' expression ':' block)* 'DEFAULT' block 'END'
 
