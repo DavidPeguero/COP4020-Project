@@ -159,7 +159,8 @@ public class LexerTests {
                 Arguments.of("Incorrect Compound", "!!", false),
                 Arguments.of("Incorrect Compound 2", "||&", false),
                 Arguments.of("Multiple Operators Separated by Whitespace", "! ==", false),
-                Arguments.of("Multiple Operators Separated by Whitespace", "( ==", false)
+                Arguments.of("Multiple Operators Separated by Whitespace", "( ==", false),
+                Arguments.of("Hyphen", "-", true)
         );
     }
 
@@ -203,6 +204,18 @@ public class LexerTests {
         ParseException exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"unterminated").lex());
         Assertions.assertEquals(13, exception.getIndex());
+
+        exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("''").lex());
+        Assertions.assertEquals(1, exception.getIndex());
+
+        exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("'aa'").lex());
+        Assertions.assertEquals(2, exception.getIndex());
+
+        exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("\"unterminated\n\"").lex());
+        Assertions.assertEquals(14, exception.getIndex());
     }
 
     /**

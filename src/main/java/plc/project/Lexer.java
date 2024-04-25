@@ -40,6 +40,7 @@ public final class Lexer {
             }
         }
 
+
         return tokenList;
     }
 
@@ -69,6 +70,9 @@ public final class Lexer {
         } else if( peek("\"") ){
             return lexString();
         } else if ( peek(numberStart) ) {
+            // If "-" is followed by some number
+            if (peek("-") && !peek("-", "[" + numbers + "]"))
+                return lexOperator();
             return lexNumber();
         } else if ( peek(opStart) ) {
             return lexOperator();
@@ -150,7 +154,6 @@ public final class Lexer {
                 if (match("[" + numbers + "]")) {
                     continue;
                 }
-
                 // Check if decimal point exists
                 else if (peek("\\.", "[" + numbers + "]") && !isDecimal){
                     match("\\.", "[" + numbers + "]");
@@ -198,7 +201,7 @@ public final class Lexer {
                 else{
                     throw new ParseException("Not a valid character length", chars.index);
                 }
-            } else if (match("'")) {
+            } else if (peek("'")) {
                 throw new ParseException("Not valid: empty character token", chars.index);
             } else {
                 throw new ParseException("Not valid: empty character token", chars.index);
@@ -209,8 +212,6 @@ public final class Lexer {
     }
 
     public Token lexString() {
-
-
         match("\"");
 
         while(chars.has(0)){
@@ -222,6 +223,8 @@ public final class Lexer {
                      throw new ParseException("Invalid String Input", chars.index);
                  }
              }
+             else if (match("\n|\r|\t|\b"))
+                 throw new ParseException("Invalid String Input", chars.index);
              else{
                  match("[^\"\\\\]");
              }
