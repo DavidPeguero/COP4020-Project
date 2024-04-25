@@ -65,7 +65,17 @@ public final class Generator implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Source ast) {
         print("public class Main {");
-        ast.getGlobals().forEach(this::print);
+        if(!ast.getGlobals().isEmpty()) {
+            newline(0);
+            newline(++indent);
+            for (int i = 0; i < ast.getGlobals().size(); i++) {
+                visit(ast.getGlobals().get(i));
+                if (i != ast.getGlobals().size() - 1) {
+                    newline(indent);
+                }
+            }
+            indent--;
+        }
         indent++;
         newline(0);
         newline(indent);
@@ -82,6 +92,7 @@ public final class Generator implements Ast.Visitor<Void> {
         for(int i = 0; i < ast.getFunctions().size(); i++){
             visit(ast.getFunctions().get(i));
             if(i != ast.getFunctions().size() - 1){
+                newline(0);
                 newline(indent);
             }
         }
@@ -107,7 +118,7 @@ public final class Generator implements Ast.Visitor<Void> {
                 print(ast.getVariable().getType().getJvmName() + " " + ast.getName() + ";");
             }
         } else{
-            print("final" + ast.getVariable().getType().getJvmName() + " " + ast.getName() + " = ", ast.getValue().get(), ";");
+            print("final " + ast.getVariable().getType().getJvmName() + " " + ast.getName() + " = ", ast.getValue().get(), ";");
 
         }
 
@@ -116,15 +127,20 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Function ast) {
-        print(ast.getFunction().getReturnType().getJvmName() + " " + ast.getName() + "(");
+        print(ast.getFunction().getReturnType().getJvmName() + " " + ast.getFunction().getJvmName() + "(");
         List<Environment.Type> pTypes = ast.getFunction().getParameterTypes();
         List<String> parameters = ast.getParameters();
+
         for(int i = 0; i < parameters.size() - 1; i++){
-            print(pTypes.get(i) + " " + parameters.get(i) + " ");
+            print(pTypes.get(i).getJvmName() + " " + parameters.get(i) + " ");
         }
         if(!pTypes.isEmpty())
-            print(pTypes.getLast()+ " " + parameters.getLast() + " {");
+            print(pTypes.getLast().getJvmName() + " " + parameters.getLast() + " {");
         print(") {");
+        if(ast.getStatements().isEmpty()){
+            print("}");
+            return null;
+        }
         indent++;
         newline(indent);
         for(int i = 0; i < ast.getStatements().size(); i++){
