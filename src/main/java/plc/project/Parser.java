@@ -317,12 +317,7 @@ public final class Parser {
             if (match("=")){
                 Ast.Expression rightExpr = parseExpression();
 
-                if (rightExpr instanceof Ast.Expression.Literal) {
-                    statement = new Ast.Statement.Assignment(expr, new Ast.Expression.Access(Optional.empty(), ((Ast.Expression.Literal) rightExpr).getLiteral().toString()));
-                }
-                else {
-                    statement = new Ast.Statement.Assignment(expr, rightExpr);
-                }
+                statement = new Ast.Statement.Assignment(expr, rightExpr);
 
             }
 
