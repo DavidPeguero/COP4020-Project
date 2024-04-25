@@ -42,6 +42,21 @@ ParserTests (47/53):
                     received Ast.Expression.Literal{literal=\\}
  */
 
+/*
+
+ParserTests (98/101):
+    Function (3/6):
+        One Argument:
+            Unexpected ParseException (Expected ')' operator)
+        Multiple Arguments:
+            Unexpected ParseException (Expected ')' operator)
+        Missing End:
+            Expected a ParseException to be thrown, received Ast.Source{globals=[]functions=[null]}
+    Expression (36/36):
+    Literal (8/8):
+    Char Escapes (1/1): Char Escape '\'': Incorrect result, received Ast.Expression.Literal{literal=\}
+    String Escapes (1/1): String Escape "\"": Incorrect result, received Ast.Expression.Literal{literal=\}
+*/
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
  * into a structured representation of the program, called the Abstract Syntax
