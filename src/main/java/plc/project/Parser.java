@@ -596,7 +596,7 @@ public final class Parser {
                 match(Token.Type.DECIMAL);
                 return decimal;
             } else if (peek(Token.Type.INTEGER)) {
-                Ast.Expression integer = new Ast.Expression.Literal(new BigInteger(tokens.get(0).getLiteral()));
+                Ast.Expression.Literal integer = new Ast.Expression.Literal(new BigInteger(tokens.get(0).getLiteral()));
                 match(Token.Type.INTEGER);
                 return integer;
             } else if (peek(Token.Type.STRING)) {
