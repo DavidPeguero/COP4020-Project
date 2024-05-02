@@ -97,6 +97,7 @@ public class GeneratorTests {
         Ast.Global global = new Ast.Global("list", "Decimal", true, Optional.of(new Ast.Expression.PlcList(Arrays.asList(expr1, expr2, expr3))));
         Ast.Global astList = init(global, ast -> ast.setVariable(new Environment.Variable("list", "list", Environment.Type.DECIMAL, true, Environment.create(Arrays.asList(new Double(1.0), new Double(1.5), new Double(2.0))))));
 
+        System.out.println(global);
         String expected = new String("double[] list = {1.0, 1.5, 2.0};");
         test(astList, expected);
     }

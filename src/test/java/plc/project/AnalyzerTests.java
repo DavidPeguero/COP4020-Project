@@ -70,6 +70,37 @@ public final class AnalyzerTests {
         }
     }
 
+//        Ast.Global{
+//            name='list', typeName=Integer, mutable=true, value=Optional[
+//                    Ast.Expression.PlcList{
+//                        values=[
+//                            [Ast.Expression.Literal{literal=1, type=Type{
+//                                name='Integer', jvmName='int', scope='Scope{ parent=Scope{parent=Scope{parent=null, variables=[], functions=[stringify/0]}, variables=[], functions=[compare/2]}, variables=[], functions=[compare/2]}'}},
+//                            Ast.Expression.Literal {literal=2, type=Type{
+//                                name='Integer', jvmName='int', scope='Scope{ parent=Scope{parent=Scope{parent=null, variables=[], functions=[stringify/0]}, variables=[], functions=[compare/2]}, variables=[], functions=[compare/2]}'}},
+//                            Ast.Expression.Literal {literal=3, type=Type{
+//                                name='Integer', jvmName='int', scope='Scope{ parent=Scope{parent=Scope{parent=null, variables=[], functions=[stringify/0]}, variables=[], functions=[compare/2]}, variables=[], functions=[compare/2]}'}}]],
+//                        type=null
+//                    }
+//            ],
+//                    variable=Variable{
+//                        name='list',
+//                        jvmName'list',
+//                        type=Type{
+//                            name='Integer', jvmName='int', scope='Scope{parent=Scope{parent=Scope{parent=null, variables=[], functions=[stringify/0]}, variables=[], functions=[compare/2]}, variables=[], functions=[compare/2]}'},
+//                        mutable=true,
+//                        value=Object{
+//                            type=Type{
+//                                name='Nil', jvmName='Void', scope='Scope{parent=Scope{parent=null, variables=[], functions=[stringify/0]}, variables=[], functions=[]}'
+//                            },
+//                            scope=Scope{
+//                                parent=null, variables=[], functions=[]
+//                            },
+//                            value=nil
+//                        }
+//            }
+//    }
+
     private static Stream<Arguments> testGlobal() {
         return Stream.of(
                 Arguments.of("Declaration",

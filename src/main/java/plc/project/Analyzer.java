@@ -51,9 +51,30 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 ((Ast.Expression.PlcList) ast.getValue().get()).getValues().forEach(expression -> {
                    requireAssignable(Environment.getType(ast.getTypeName()), expression.getType());
                 });
+
+                // NEW
+                Environment.Type type = Environment.getType(ast.getTypeName());
+                List<Object> list = new ArrayList<>();
+                ((Ast.Expression.PlcList) ast.getValue().get()).getValues().forEach(expression -> {
+                    list.add(((Ast.Expression.Literal)expression).getLiteral());
+                });
+
+                Environment.PlcObject value = new Environment.PlcObject(type, scope, list);
+                Environment.Variable variable = scope.defineVariable(ast.getName(), ast.getName(), type, ast.getMutable(), value);
+                ast.setVariable(variable);
+                // NEW
             }
-            else
+            else{
                 requireAssignable(Environment.getType(ast.getTypeName()), ast.getValue().get().getType());
+
+                // NEW
+                Environment.Type type = Environment.getType(ast.getTypeName());
+                Environment.PlcObject value = new Environment.PlcObject(type, scope, Environment.NIL);
+                Environment.Variable variable = scope.defineVariable(ast.getName(), ast.getName(), type, ast.getMutable(), value);
+                ast.setVariable(variable);
+                // NEW
+            }
+            return null;
         }
         scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), ast.getMutable(), Environment.NIL);
         ast.setVariable(scope.lookupVariable(ast.getName()));
